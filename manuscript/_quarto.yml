@@ -1,0 +1,34 @@
+project:
+  type: manuscript
+
+manuscript:
+  article: index.qmd
+
+format:
+  html:
+    citations-hover: true
+    crossrefs-hover: true
+    toc: true
+    toc-location: left
+    title-block-style: manuscript
+    theme: 
+      light: cosmo 
+      dark: superhero 
+  pdf: 
+    include-in-header: 
+      - text: | 
+          \usepackage{amsthm,amsmath,amssymb}
+          \usepackage{graphicx}
+          \usepackage[numbers]{natbib}
+          \usepackage[utf8]{inputenc}
+          \usepackage{float}
+          \usepackage{changepage}
+          \usepackage[dvipsnames]{xcolor}
+          \usepackage{listings}
+          \usepackage[english]{babel}
+          \usepackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+          \usepackage{booktabs}
+          \usepackage{array}
+execute:
+  freeze: true
+number-sections: true

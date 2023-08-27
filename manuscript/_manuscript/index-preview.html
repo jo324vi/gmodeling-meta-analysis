@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.4.288">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+    <meta name="author" content="Johannes Vilsmeier">
+
+    <title>Empirical Bayes Meta-Analysis Through G-Modeling</title>
+    <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: min(4vw, 1.5em);}
+      div.column{flex: auto; overflow-x: auto;}
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+      /* CSS for citations */
+      div.csl-bib-body { }
+      div.csl-entry {
+        clear: both;
+      }
+      .hanging-indent div.csl-entry {
+        margin-left:2em;
+        text-indent:-2em;
+      }
+      div.csl-left-margin {
+        min-width:2em;
+        float:left;
+      }
+      div.csl-right-inline {
+        margin-left:2em;
+        padding-left:1em;
+      }
+      div.csl-indent {
+        margin-left: 2em;
+      }    </style>
+
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
+
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
+
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      const titleBannerEl = window.document.querySelector("body > #title-block-header");
+      if (titleBannerEl) {
+        titleBannerEl.style.paddingTop = header.clientHeight + "px";
+      }
+      const contentEl = window.document.getElementById('quarto-content');
+      for (const child of contentEl.children) {
+        child.style.paddingTop = header.clientHeight + "px";
+        child.style.marginTop = "1em";
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "index.html";
+            }
+        }, 100);
+      }
+
+      const headroom = new window.Headroom(header, {
+        tolerance: 5,
+        onPin: function () {
+        },
+        onUnpin: function () {
+        },
+      });
+      headroom.init();
+    });
+    </script>
+
+    
+<script src="site_libs/manuscript-notebook/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script> 
+      <meta name="citation_title" content="Empirical Bayes Meta-Analysis Through G-Modeling">
+<meta name="citation_abstract" content="The usual approach to empirical Bayes modeling, referred to as $f$-modeling, builds on the assumption of a
+prior distribution with known shape up to a parameter $\gamma$. Inference is carried out by setting
+$\gamma$ equal to an estimate obtained from the marginal distribution of observations $y_1,\ldots,y_n$. A less restrictive modeling approach, referred to as $g$-modeling,
+relaxes this assumption by requiring solely that the prior distribution belongs to the exponential family of distributions
+indexed by a parameter $\alpha$. So far, applications of $g$-modeling comprise parallel estimation problems
+in relatively large data sets. Meta-Analyses also give rise to parallel estimation problems. Moreover, $f$-modeling approaches to
+meta-analysis are well established. Here, a $g$-modeling based approach for conducting a
+meta-analysis is developed and its performance is compared to both maximum- and restricted
+maximum-likelihood based random-effects meta-analysis in simulations. Results indicate that the $g$-modeling meta-analysis compares reasonably well.
+Zero-variance estimates of between-study effects are completely avoided by construction, and
+coverage probabilities of Wald-type confidence intervals for the average meta-analytic effect were consistently
+better than those obtained in the maximum- and restricted maximum-likelihood meta-analytic frameworks.
+">
+<meta name="citation_author" content="Johannes Vilsmeier">
+<meta name="citation_language" content="en">
+<meta name="citation_reference" content="citation_title=deconvolveR: A G-Modeling Program for Deconvolution and Empirical Bayes Estimation;,citation_abstract=Empirical Bayes inference assumes an unknown prior density g(θ) has yielded (unobservables) Θ1, Θ2, ..., ΘN, and each Θi produces an independent observation Xi from pi (Xi  Θi). The marginal density fi (Xi) is a convolution of the prior g and pi. The Bayes deconvolution problem is one of recovering g from the data. Although estimation of g - so called g-modeling - is difficult, the results are more encouraging if the prior g is restricted to lie within a parametric family of distributions. We present a deconvolution approach where g is restricted to be in a parametric exponential family, along with an R package deconvolveR designed for the purpose.;,citation_author=Balasubramanian Narasimhan;,citation_author=Bradley Efron;,citation_publication_date=2020-09;,citation_cover_date=2020-09;,citation_year=2020;,citation_fulltext_html_url=https://doi.org/10.18637/jss.v094.i11;,citation_doi=10.18637/jss.v094.i11;,citation_issn=1548-7660;,citation_volume=94;,citation_journal_title=Journal of Statistical Software;">
+<meta name="citation_reference" content="citation_title=Empirical Bayes deconvolution estimates;,citation_abstract=An unknown prior density g(θ ) has yielded realizations 1, . . . , N . They are unobservable, but each i produces an observable value Xi according to a known probability mechanism, such as Xi ∼ Po( i ). We wish to estimate g(θ ) from the observed sample X1, . . . , X N . Traditional asymptotic calculations are discouraging, indicating very slow nonparametric rates of convergence. In this article we show that parametric exponential family modelling of g(θ ) can give useful estimates in moderate-sized samples. We illustrate the approach with a variety of real and artificial examples. Covariate information can be incorporated into the deconvolution process, leading to a more detailed theory of generalized linear mixed models.;,citation_author=Bradley Efron;,citation_publication_date=2016-03;,citation_cover_date=2016-03;,citation_year=2016;,citation_fulltext_html_url=https://academic.oup.com/biomet/article-lookup/doi/10.1093/biomet/asv068;,citation_issue=1;,citation_doi=10.1093/biomet/asv068;,citation_issn=0006-3444, 1464-3510;,citation_volume=103;,citation_journal_title=Biometrika;">
+<meta name="citation_reference" content="citation_title=The statistical properties of RCTs and a proposal for shrinkage;,citation_abstract=We abstract the concept of a randomized controlled trial as a triple (β,b,s), where β is the primary efficacy parameter, b the estimate, and s the standard error (s&amp;amp;amp;gt;0). If the parameter β is either a difference of means, a log odds ratio or a log hazard ratio, then it is reasonable to assume that b is unbiased and normally distributed. This then allows us to estimate the joint distribution of the z-value z=b/s and the signal-to-noise ratio SNR=β/s from a sample of pairs (bi,si). We have collected 23 551 such pairs from the Cochrane database. We note that there are many statistical quantities that depend on (β,b,s) only through the pair (z,SNR). We start by determining the estimated distribution of the achieved power. In particular, we estimate the median achieved power to be only 13%. We also consider the exaggeration ratio which is the factor by which the magnitude of β is overestimated. We find that if the estimate is just significant at the 5% level, we would expect it to overestimate the true effect by a factor of 1.7. This exaggeration is sometimes referred to as the winner’s curse and it is undoubtedly to a considerable extent responsible for disappointing replication results. For this reason, we believe it is important to shrink the unbiased estimator, and we propose a method for doing so. We show that our shrinkage estimator successfully addresses the exaggeration. As an example, we re-analyze the ANDROMEDA-SHOCK trial.;,citation_author=Erik Zwet;,citation_author=Simon Schwab;,citation_author=Stephen Senn;,citation_publication_date=2021;,citation_cover_date=2021;,citation_year=2021;,citation_fulltext_html_url=https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.9173;,citation_issue=27;,citation_doi=10.1002/sim.9173;,citation_issn=1097-0258;,citation_volume=40;,citation_journal_title=Statistics in Medicine;">
+<meta name="citation_reference" content="citation_title=The Significance Filter, the Winner’s Curse and the Need to Shrink;,citation_abstract=The &amp;amp;amp;quot;significance filter&amp;quot; refers to focusing exclusively on statistically significant results. Since frequentist properties such as unbiasedness and coverage are valid only before the data have been observed, there are no guarantees if we condition on significance. In fact, the significance filter leads to overestimation of the magnitude of the parameter, which has been called the &quot;winner’s curse&quot;. It can also lead to undercoverage of the confidence interval. Moreover, these problems become more severe if the power is low. While these issues clearly deserve our attention, they have been studied only informally and mathematical results are lacking. Here we study them from the frequentist and the Bayesian perspective. We prove that the relative bias of the magnitude is a decreasing function of the power and that the usual confidence interval undercovers when the power is less than 50%. We conclude that failure to apply the appropriate amount of shrinkage can lead to misleading inferences.;,citation_author=Erik Zwet;,citation_author=Eric Cator;,citation_publication_date=2020-09;,citation_cover_date=2020-09;,citation_year=2020;,citation_fulltext_html_url=http://arxiv.org/abs/2009.09440;,citation_doi=10.48550/arXiv.2009.09440;,citation_publisher=arXiv;">
+<meta name="citation_reference" content="citation_title=A proposal for informative default priors scaled by the standard error of estimates;,citation_abstract=If we have an unbiased estimate of some parameter of interest, then its absolute value is positively biased for the absolute value of the parameter. This bias is large when the signal-to-noise ratio (SNR) is small, and it becomes even larger when we condition on statistical significance; the winner’s curse. This is a frequentist motivation for regularization. To determine a suitable amount of shrinkage, we propose to estimate the distribution of the SNR from a large collection or corpus of similar studies and use this as a prior distribution. The wider the scope of the corpus, the less informative the prior, but a wider scope does not necessarily result in a more diffuse prior. We show that the estimation of the prior simplifies if we require that posterior inference is equivariant under linear transformations of the data. We demonstrate our approach with corpora of 86 replication studies from psychology and 178 phase 3 clinical trials. Our suggestion is not intended to be a replacement for a prior based on full information about a particular problem; rather, it represents a familywise choice that should yield better long-term properties than the current default uniform prior, which has led to systematic overestimates of effect sizes and a replication crisis when these inflated estimates have not shown up in later studies.;,citation_author=Erik Zwet;,citation_author=Andrew Gelman;,citation_publication_date=2020-11;,citation_cover_date=2020-11;,citation_year=2020;,citation_fulltext_html_url=http://arxiv.org/abs/2011.15037;,citation_doi=10.48550/arXiv.2011.15037;,citation_publisher=arXiv;">
+<meta name="citation_reference" content="citation_title=Large-scale inference: Empirical Bayes methods for estimation, testing, and prediction;,citation_author=Bradley Efron;,citation_publication_date=2010;,citation_cover_date=2010;,citation_year=2010;,citation_isbn=978-0-521-19249-1;,citation_series_title=Institute of mathematical statistics monographs;">
+<meta name="citation_reference" content="citation_title=Optimal Rates of Convergence for Deconvolving a Density;,citation_abstract=Suppose that the sum of two independent random variables X and Z is observed, where Z denotes measurement error and has a known distribution, and where the unknown density f of X is to be estimated. One application is the estimation of a prior density for a sequence of location parameters. A second application arises in the errors-in-variables problem for nonlinear and generalized linear models, when one attempts to model the distribution of the true but unobservable covariates. This article shows that if Z is normally distributed and f has k bounded derivatives, then the fastest attainable convergence rate of any nonparametric estimator of f is only (log n)–k/2. Therefore, deconvolution with normal errors may not be a practical proposition. Other error distributions are also treated. Stefanski—Carroll (1987a) estimators achieve the optimal rates. The results given have versions for multiplicative errors, where they imply that even optimal rates are exceptionally slow.;,citation_author=Raymond J. Carroll;,citation_author=Peter Hall;,citation_publication_date=1988-12;,citation_cover_date=1988-12;,citation_year=1988;,citation_fulltext_html_url=https://www.tandfonline.com/doi/abs/10.1080/01621459.1988.10478718;,citation_issue=404;,citation_doi=10.1080/01621459.1988.10478718;,citation_issn=0162-1459;,citation_volume=83;,citation_journal_title=Journal of the American Statistical Association;">
+<meta name="citation_reference" content="citation_title=Two Modeling Strategies for Empirical Bayes Estimation;,citation_abstract=Empirical Bayes methods use the data from parallel experiments, for instance, observations $X_{k}\sim\mathcal{N}(\Theta_{k},1)$ for $k=1,2,\ldots,N$, to estimate the conditional distributions $\Theta_{k}X_{k}$. There are two main estimation strategies: modeling on the $\theta$ space, called “$g$-modeling” here, and modeling on the $x$ space, called “$f$-modeling.” The two approaches are described and compared. A series of computational formulas are developed to assess their frequentist accuracy. Several examples, both contrived and genuine, show the strengths and limitations of the two strategies.;,citation_author=Bradley Efron;,citation_publication_date=2014-05;,citation_cover_date=2014-05;,citation_year=2014;,citation_fulltext_html_url=https://projecteuclid.org/journals/statistical-science/volume-29/issue-2/Two-Modeling-Strategies-for-Empirical-Bayes-Estimation/10.1214/13-STS455.full;,citation_issue=2;,citation_doi=10.1214/13-STS455;,citation_issn=0883-4237, 2168-8745;,citation_volume=29;,citation_journal_title=Statistical Science;">
+<meta name="citation_reference" content="citation_title=An Introduction to Empirical Bayes Data Analysis;,citation_abstract=Empirical Bayes methods have been shown to be powerful data-analysis tools in recent years. The empirical Bayes model is much richer than either the classical or the ordinary Bayes model and often provides superior estimates of parameters. An introduction to some empirical Bayes methods is given, and these methods are illustrated with two examples.;,citation_author=George Casella;,citation_publication_date=1985;,citation_cover_date=1985;,citation_year=1985;,citation_fulltext_html_url=https://www.jstor.org/stable/2682801;,citation_issue=2;,citation_doi=10.2307/2682801;,citation_issn=0003-1305;,citation_volume=39;,citation_journal_title=The American Statistician;">
+<meta name="citation_reference" content="citation_title=Computer age statistical inference: Algorithms, evidence, and data science;,citation_author=Bradley Efron;,citation_author=Trevor Hastie;,citation_publication_date=2016;,citation_cover_date=2016;,citation_year=2016;,citation_isbn=978-1-107-14989-2;,citation_series_title=Institute of Mathematical Statistics monographs;">
+<meta name="citation_reference" content="citation_title=A re-evaluation of random-effects meta-analysis;,citation_abstract=Meta-analysis in the presence of unexplained heterogeneity is frequently undertaken by using a random-effects model, in which the effects underlying different studies are assumed to be drawn from a normal distribution. Here we discuss the justiﬁcation and interpretation of such models, by addressing in turn the aims of estimation, prediction and hypothesis testing. A particular issue that we consider is the distinction between inference on the mean of the random-effects distribution and inference on the whole distribution. We suggest that random-effects meta-analyses as currently conducted often fail to provide the key results, and we investigate the extent to which distribution-free, classical and Bayesian approaches can provide satisfactory methods. We conclude that the Bayesian approach has the advantage of naturally allowing for full uncertainty, especially for prediction. However, it is not without problems, including computational intensity and sensitivity to a priori judgements. We propose a simple prediction interval for classical meta-analysis and offer extensions to standard practice of Bayesian meta-analysis, making use of an example of studies of “set shifting” ability in people with eating disorders.;,citation_author=Julian P. T. Higgins;,citation_author=Simon G. Thompson;,citation_author=David J. Spiegelhalter;,citation_publication_date=2009-01;,citation_cover_date=2009-01;,citation_year=2009;,citation_fulltext_html_url=https://onlinelibrary.wiley.com/doi/10.1111/j.1467-985X.2008.00552.x;,citation_issue=1;,citation_doi=10.1111/j.1467-985X.2008.00552.x;,citation_issn=09641998, 1467985X;,citation_volume=172;,citation_journal_title=Journal of the Royal Statistical Society: Series A (Statistics in Society);">
+<meta name="citation_reference" content="citation_title=Avoiding zero between-study variance estimates in random-effects meta-analysis;,citation_abstract=Fixed-effects meta-analysis has been criticized because the assumption of homogeneity is often unrealistic and can result in underestimation of parameter uncertainty. Random-effects meta-analysis and meta-regression are therefore typically used to accommodate explained and unexplained between-study variability. However, it is not unusual to obtain a boundary estimate of zero for the (residual) between-study standard deviation, resulting in fixed-effects estimates of the other parameters and their standard errors. To avoid such boundary estimates, we suggest using Bayes modal (BM) estimation with a gamma prior on the between-study standard deviation. When no prior information is available regarding the magnitude of the between-study standard deviation, a weakly informative default prior can be used (with shape parameter 2 and rate parameter close to 0) that produces positive estimates but does not overrule the data, leading to only a small decrease in the log likelihood from its maximum. We review the most commonly used estimation methods for meta-analysis and meta-regression including classical and Bayesian methods and apply these methods, as well as our BM estimator, to real datasets. We then perform simulations to compare BM estimation with the other methods and find that BM estimation performs well by (i) avoiding boundary estimates; (ii) having smaller root mean squared error for the between-study standard deviation; and (iii) better coverage for the overall effects than the other methods when the true model has at least a small or moderate amount of unexplained heterogeneity. Copyright © 2013 John Wiley &amp;amp;amp; Sons, Ltd.;,citation_author=Yeojin Chung;,citation_author=Sophia Rabe-Hesketh;,citation_author=In-Hee Choi;,citation_publication_date=2013;,citation_cover_date=2013;,citation_year=2013;,citation_fulltext_html_url=https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.5821;,citation_issue=23;,citation_doi=10.1002/sim.5821;,citation_issn=1097-0258;,citation_volume=32;,citation_journal_title=Statistics in Medicine;">
+<meta name="citation_reference" content="citation_title=Bias and Efficiency of Meta-Analytic Variance Estimators in the Random-Effects Model;,citation_abstract=The meta-analytic random effects model assumes that the variability in effect size estimates drawn from a set of studies can be decomposed into two parts: heterogeneity due to random population effects and sampling variance. In this context, the usual goal is to estimate the central tendency and the amount of heterogeneity in the population effect sizes. The amount of heterogeneity in a set of effect sizes has implications regarding the interpretation of the meta-analytic ﬁndings and often serves as an indicator for the presence of potential moderator variables. Five population heterogeneity estimators were compared in this article analytically and via Monte Carlo simulations with respect to their bias and efﬁciency.;,citation_author=Wolfgang Viechtbauer;,citation_publication_date=2005-09;,citation_cover_date=2005-09;,citation_year=2005;,citation_fulltext_html_url=http://journals.sagepub.com/doi/10.3102/10769986030003261;,citation_issue=3;,citation_doi=10.3102/10769986030003261;,citation_issn=1076-9986, 1935-1054;,citation_volume=30;,citation_journal_title=Journal of Educational and Behavioral Statistics;">
+<meta name="citation_reference" content="citation_title=Maximum Likelihood Approaches to Variance Component Estimation and to Related Problems;,citation_abstract=Recent developments promise to increase greatly the popularity of maximum likelihood (ML) as a technique for estimating variance components. Patterson and Thompson (1971) proposed a restricted maximum likelihood (REML) approach which takes into account the loss in degrees of freedom resulting from estimating fixed effects. Miller (1973) developed a satisfactory asymptotic theory for ML estimators of variance components. There are many iterative algorithms that can be considered for computing the ML or REML estimates. The computations on each iteration of these algorithms are those associated with computing estimates of fixed and random effects for given values of the variance components.;,citation_author=David A. Harville;,citation_publication_date=1977;,citation_cover_date=1977;,citation_year=1977;,citation_fulltext_html_url=https://www.jstor.org/stable/2286796;,citation_issue=358;,citation_doi=10.2307/2286796;,citation_issn=0162-1459;,citation_volume=72;,citation_journal_title=Journal of the American Statistical Association;">
+<meta name="citation_reference" content="citation_title=Theory of point estimation;,citation_author=E. L. Lehmann;,citation_author=George Casella;,citation_publication_date=1998;,citation_cover_date=1998;,citation_year=1998;,citation_isbn=978-0-387-98502-2;,citation_series_title=Springer texts in statistics;">
+<meta name="citation_reference" content="citation_title=Optim: A mathematical optimization package for Julia;,citation_author=Patrick Kofod Mogensen;,citation_author=Asbjørn Nilsen Riseth;,citation_publication_date=2018;,citation_cover_date=2018;,citation_year=2018;,citation_issue=24;,citation_doi=10.21105/joss.00615;,citation_volume=3;,citation_journal_title=Journal of Open Source Software;">
+<meta name="citation_reference" content="citation_title=A comparison of statistical methods for meta-analysis;,citation_abstract=Meta-analysis may be used to estimate an overall effect across a number of similar studies. A number of statistical techniques are currently used to combine individual study results. The simplest of these is based on a fixed effects model, which assumes the true effect is the same for all studies. A random effects model, however, allows the true effect to vary across studies, with the mean true effect the parameter of interest. We consider three methods currently used for estimation within the framework of a random effects model, and illustrate them by applying each method to a collection of six studies on the effect of aspirin after myocardial infarction. These methods are compared using estimated coverage probabilities of confidence intervals for the overall effect. The techniques considered all generally have coverages below the nominal level, and in particular it is shown that the commonly used DerSimonian and Laird method does not adequately reflect the error associated with parameter estimation, especially when the number of studies is small. Copyright © 2001 John Wiley &amp;amp;amp; Sons, Ltd.;,citation_author=Sarah E. Brockwell;,citation_author=Ian R. Gordon;,citation_publication_date=2001;,citation_cover_date=2001;,citation_year=2001;,citation_fulltext_html_url=https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.650;,citation_issue=6;,citation_doi=10.1002/sim.650;,citation_issn=1097-0258;,citation_volume=20;,citation_journal_title=Statistics in Medicine;">
+<meta name="citation_reference" content="citation_title=Empirical bayes meta-analysis;,citation_abstract=As interest in quantitative research synthesis grows, investigators increasingly seek to use information about study features-study contexts, designs, treatments, and subjects-to account for variation in study outcomes. To facilitate analysis of diverse study findings, a mixed linear model with fixed and random effects is presented and illustrated with data from teacher expectancy experiments. This strategy enables the analyst to (a) estimate the variance of the effect size parameters by means of maximum likelihood; (b) pose a series of linear models to explain the effect parameter variance; (c) use information about study characteristics to derive improved empirical Bayes estimates of individual study effect sizes; and (d) examine the sensitivity of all substantive inferences to likely errors in the estimation of variance components.;,citation_author=Stephen W. Raudenbush;,citation_author=Anthony S. Bryk;,citation_publication_date=1985;,citation_cover_date=1985;,citation_year=1985;,citation_fulltext_html_url=http://www.jstor.org/stable/1164836;,citation_issue=2;,citation_issn=03629791;,citation_volume=10;,citation_journal_title=Journal of Educational Statistics;,citation_publisher=[Sage Publications, Inc., American Educational Research Association, American Statistical Association];">
+<meta name="citation_reference" content="citation_title=Julia: A fresh approach to numerical computing;,citation_author=Jeff Bezanson;,citation_author=Alan Edelman;,citation_author=Stefan Karpinski;,citation_author=Viral B Shah;,citation_publication_date=2017;,citation_cover_date=2017;,citation_year=2017;,citation_fulltext_html_url=https://epubs.siam.org/doi/10.1137/141000671;,citation_issue=1;,citation_doi=10.1137/141000671;,citation_volume=59;,citation_journal_title=SIAM Review;,citation_publisher=SIAM;">
+<meta name="citation_reference" content="citation_title=Distributions.jl: Definition and modeling of probability distributions in the JuliaStats ecosystem;,citation_author=Mathieu Besançon;,citation_author=Theodore Papamarkou;,citation_author=David Anthoff;,citation_author=Alex Arslan;,citation_author=Simon Byrne;,citation_author=Dahua Lin;,citation_author=John Pearson;,citation_publication_date=2021;,citation_cover_date=2021;,citation_year=2021;,citation_fulltext_html_url=https://www.jstatsoft.org/v098/i16;,citation_issue=16;,citation_doi=10.18637/jss.v098.i16;,citation_issn=1548-7660;,citation_volume=98;,citation_journal_title=Journal of Statistical Software;">
+</head>
+
+  <body class="quarto-notebook">
+    <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
+      
+      <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6><i class="bi bi-journal-code"></i> Article Notebook</h6>
+
+            <a href="./index.qmd" class="btn btn-primary quarto-download-embed" download="index.qmd">Download Source</a>
+          </div>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Empirical Bayes Meta-Analysis Through G-Modeling</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                <div>
+            <div class="quarto-title-meta-heading">Author</div>
+            <div class="quarto-title-meta-contents">
+                        <p>Johannes Vilsmeier </p>
+                      </div>
+          </div>
+                
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+    <div>
+      <div class="abstract">
+        <div class="block-title">Abstract</div>
+        <p>The usual approach to empirical Bayes modeling, referred to as <span class="math inline">\(f\)</span>-modeling, builds on the assumption of a prior distribution with known shape up to a parameter <span class="math inline">\(\gamma\)</span>. Inference is carried out by setting <span class="math inline">\(\gamma\)</span> equal to an estimate obtained from the marginal distribution of observations <span class="math inline">\(y_1,\ldots,y_n\)</span>. A less restrictive modeling approach, referred to as <span class="math inline">\(g\)</span>-modeling, relaxes this assumption by requiring solely that the prior distribution belongs to the exponential family of distributions indexed by a parameter <span class="math inline">\(\alpha\)</span>. So far, applications of <span class="math inline">\(g\)</span>-modeling comprise parallel estimation problems in relatively large data sets. Meta-Analyses also give rise to parallel estimation problems. Moreover, <span class="math inline">\(f\)</span>-modeling approaches to meta-analysis are well established. Here, a <span class="math inline">\(g\)</span>-modeling based approach for conducting a meta-analysis is developed and its performance is compared to both maximum- and restricted maximum-likelihood based random-effects meta-analysis in simulations. Results indicate that the <span class="math inline">\(g\)</span>-modeling meta-analysis compares reasonably well. Zero-variance estimates of between-study effects are completely avoided by construction, and coverage probabilities of Wald-type confidence intervals for the average meta-analytic effect were consistently better than those obtained in the maximum- and restricted maximum-likelihood meta-analytic frameworks.</p>
+      </div>
+    </div>
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">      
+
+     <div id="fcfa0837" class="cell markdown">
+<section id="sec-intro" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>Consider the following <em>Bayes model</em> <span class="citation" data-cites="lehmann1998">(<a href="#ref-lehmann1998" role="doc-biblioref">Lehmann and Casella 1998, 240</a>)</span> for <span class="math inline">\(n\in \mathbb{N}\)</span> random variables, <span class="math inline">\(y_1,\ldots,y_n\in \mathbb{R}\)</span>:</p>
+<p><span id="eq-bayes_model"><span class="math display">\[
+  \begin{split}
+    \text{I.}\quad &amp;y_i|\theta_i \overset{\text{ind.}}{\sim} p_i(y_i|\theta_i) \\
+    \text{II.}\quad &amp;\theta_i|\gamma \overset{\text{i.i.d}}{\sim}  g(\theta_i|\gamma), \quad i = 1,\ldots,n.
+  \end{split}
+\tag{1}\]</span></span></p>
+<p>Each of the <span class="math inline">\(y_i\)</span>’s is regarded as an independent draw from a known family of probability distributions with conditional density <span class="math inline">\(p_i(y_i|\theta_i)\)</span> indexed by a parameter <span class="math inline">\(\theta_i\in \Theta \subseteq \mathbb{R}\)</span>. The parameter space <span class="math inline">\(\Theta\)</span> is itself equipped with a probability distribution (i.e., the <em>prior distribution</em>) with density <span class="math inline">\(g(\theta|\gamma)\)</span>, indexed by a parameter <span class="math inline">\(\gamma\)</span>. The <span class="math inline">\(\theta_i\)</span>’s (<span class="math inline">\(i = 1,\ldots,n\)</span>) are independently and identically distributed according to <span class="math inline">\(g(\theta|\gamma)\)</span>. Collecting the <span class="math inline">\(y_i\)</span>’s in a vector <span class="math inline">\(\boldsymbol{y} = (y_1,\ldots,y_n)\)</span> and the <span class="math inline">\(\theta_i\)</span>’s in a vector <span class="math inline">\(\boldsymbol{\theta} = (\theta_1,\ldots,\theta_n)\)</span>, the joint conditional density of <span class="math inline">\(\boldsymbol{y}\)</span> and the joint density of <span class="math inline">\(\boldsymbol{\theta}\)</span> will be denoted by <span class="math inline">\(p(\boldsymbol{y}|\boldsymbol{\theta}) = \prod_{i=1}^n p_i(y_i|\theta_i)\)</span> and <span class="math inline">\(g(\boldsymbol{\theta}|\gamma) = \prod_{i=1}^n g(\theta|\gamma)\)</span>, respectively.</p>
+<p>The primary goal is to infer about <span class="math inline">\(\boldsymbol{\theta}\)</span> - the parameter (a vector) of interest. This is done through the posterior distribution,</p>
+<p><span id="eq-single-prior"><span class="math display">\[
+g(\boldsymbol{\theta}|\boldsymbol{y},\gamma) = \frac{p(\boldsymbol{y}|\boldsymbol{\theta})g(\boldsymbol{\theta}|\gamma)}{\int_{\Theta^n}p(\boldsymbol{y}|\theta)g(\boldsymbol{\theta}|\gamma) d\boldsymbol{\theta}} = \frac{p(\boldsymbol{y}|\boldsymbol{\theta})g(\boldsymbol{\theta}|\gamma)}{f(\boldsymbol{y}|\gamma)}.
+\tag{2}\]</span></span></p>
+<p>It is straightforward to apply (<a href="#eq-single-prior" class="quarto-xref">2</a>) once the Bayes model (<a href="#eq-bayes_model" class="quarto-xref">1</a>) has been fully specified, including the parameter <span class="math inline">\(\gamma\)</span> of the prior distribution (or more generally, the prior distribution <span class="math inline">\(g\)</span>). There are several strategies for specifying the prior distribution through a parameter <span class="math inline">\(\gamma\)</span> in (<a href="#eq-bayes_model" class="quarto-xref">1</a>). Two of these are referred to as <em>single-prior Bayes</em> and <em>empirical Bayes</em> in Lehmann and Casella <span class="citation" data-cites="lehmann1998">(<a href="#ref-lehmann1998" role="doc-biblioref">1998</a>, Ch. 5)</span>.</p>
+<p>In <em>single-prior Bayes</em>, <span class="math inline">\(\gamma\)</span> (and hence, the entire prior distribution <span class="math inline">\(g\)</span>) is chosen by the analyst. For instance, if <span class="math inline">\(y_1,\ldots,y_n|\mu \overset{\text{i.i.d}}{\sim} \text{Normal}(\mu, \sigma^2)\)</span>, <span class="math inline">\(\sigma^2\in (0,\infty)\)</span> known, one might choose a conjugate <span class="math inline">\(\text{Normal}(\mu_0,\sigma^2_0)\)</span> prior for <span class="math inline">\(\mu\)</span>. Here, <span class="math inline">\(\gamma\)</span> is a vector <span class="math inline">\((\mu_0,\sigma_0^2)\)</span> and it is set to a particular value in <span class="math inline">\(\mathbb{R}\times (0,\infty)\)</span> defined by the analyst <em>a priori</em>.</p>
+<p>In <em>empirical Bayes</em>, <span class="math inline">\(\gamma\)</span> is replaced by an estimate <span class="math inline">\(\hat \gamma\)</span> obtained from the marginal distribution <span class="math inline">\(f(\boldsymbol{y}|\gamma)\)</span>. The maximum likelihood (ML) estimate of <span class="math inline">\(\gamma\)</span> <span class="math display">\[
+\hat\gamma_{\text{ML}} = \arg\max_{\gamma} f(\boldsymbol{y}|\gamma) =  \arg\max_{\gamma} \int_{\Theta^n} p(\boldsymbol{y}|\boldsymbol{\theta})g(\boldsymbol{\theta}|\gamma)d \boldsymbol{\theta}
+\]</span> may be used, however <span class="math inline">\(\hat\gamma\)</span> does not have to be ML-based.</p>
+<p>The posterior of <span class="math inline">\(\boldsymbol{\theta}\)</span> is then approximated by a plug-in version of (<a href="#eq-single-prior" class="quarto-xref">2</a>): <span class="math display">\[
+g(\boldsymbol{\theta} | \boldsymbol{y}, \hat \gamma) = \frac{p(\boldsymbol{y}|\boldsymbol{\theta})g(\boldsymbol{\theta}|\hat\gamma)}{f(\boldsymbol{y}|\hat \gamma)}.
+\]</span></p>
+<p>Within empirical Bayes, two different strategies can be distinguished: <em><span class="math inline">\(f\)</span>-modeling</em> and <em><span class="math inline">\(g\)</span>-modeling</em> <span class="citation" data-cites="efron2014">(<a href="#ref-efron2014" role="doc-biblioref">Efron 2014</a>)</span>. The strategy described in the previous paragraph describes <span class="math inline">\(f\)</span>-modeling; the prior density <span class="math inline">\(g\)</span> is assumed to belong to a known parametric family of distributions indexed by a parameter <span class="math inline">\(\gamma\)</span>, while <span class="math inline">\(\hat \gamma\)</span> is estimated from the marginal distribution <span class="math inline">\(f\)</span> (hence the name <span class="math inline">\(f\)</span>-modeling).</p>
+<p>The second empirical Bayes strategy, <span class="math inline">\(g\)</span>-modeling, is concerned with estimating the entire prior distribution through its density <span class="math inline">\(g\)</span> from the data (hence the name <span class="math inline">\(g\)</span>-modeling), making no parametric assumption in stage II. of (<a href="#eq-bayes_model" class="quarto-xref">1</a>). That is, stage II of the Bayes model is simply <span class="math inline">\(\theta_i \overset{\text{i.i.d}}{\sim} g\)</span>, where <span class="math inline">\(g\)</span> denotes the density of a prior distribution for the <span class="math inline">\(\theta_i\)</span>’s.</p>
+<p>Letting <span class="math inline">\(\hat g\)</span> denote the estimate of the prior density, the posterior is then given by <span class="math display">\[
+\hat g(\boldsymbol{\theta}|\boldsymbol{y}) = \frac{p(\boldsymbol{\theta}|\boldsymbol{y})\hat g(\boldsymbol{\theta})}{f(\boldsymbol{y})} = \frac{p(\boldsymbol{\theta}|\boldsymbol{y})\hat g(\boldsymbol{\theta})}{\int_{\Theta^n} p(\boldsymbol{\theta}|\boldsymbol{y})\hat g(\boldsymbol{\theta})d\boldsymbol{\theta}}.
+\]</span></p>
+<p>Unfortunately, this non-parametric ideal version of <span class="math inline">\(g\)</span>-modeling is practically infeasible as convergence rates of <span class="math inline">\(\hat g\)</span> to <span class="math inline">\(g\)</span> are poor <span class="citation" data-cites="carroll1988 narasimhan2020">(<a href="#ref-carroll1988" role="doc-biblioref">Carroll and Hall 1988</a>; <a href="#ref-narasimhan2020" role="doc-biblioref">Narasimhan and Efron 2020</a>)</span>. The <span class="math inline">\(g\)</span>-modeling approach considered here and in e.g., Chapter 21 of <span class="citation" data-cites="efron2016c">Efron and Hastie (<a href="#ref-efron2016c" role="doc-biblioref">2016</a>)</span> may be described as a compromise between a fully non-parametric strategy and <span class="math inline">\(f\)</span>-modeling: The prior <span class="math inline">\(g\)</span> is assumed to belong to the exponential family of distributions indexed by a parameter <span class="math inline">\(\alpha\)</span> (further details are given in <a href="#sec-theory" class="quarto-xref">Section&nbsp;2.1</a> below). This restriction on <span class="math inline">\(g\)</span> allows for efficient estimation as shown by <span class="citation" data-cites="efron2016a">Efron (<a href="#ref-efron2016a" role="doc-biblioref">2016</a>)</span>.</p>
+<p>Examples of applications of the exponential-family-based parametric version of <span class="math inline">\(g\)</span>-modeling (from here on simply referred to as <span class="math inline">\(g\)</span>-modeling) to real-world data can be found in <span class="citation" data-cites="efron2014">Efron (<a href="#ref-efron2014" role="doc-biblioref">2014</a>)</span>, <span class="citation" data-cites="efron2016a">Efron (<a href="#ref-efron2016a" role="doc-biblioref">2016</a>)</span>, Efron and Hastie <span class="citation" data-cites="efron2016c">(<a href="#ref-efron2016c" role="doc-biblioref">Efron and Hastie 2016</a>, Ch. 21)</span> and <span class="citation" data-cites="narasimhan2020">Narasimhan and Efron (<a href="#ref-narasimhan2020" role="doc-biblioref">2020</a>)</span>. They encompass applications of <span class="math inline">\(g\)</span>-modeling to problems such as estimating the number of words in William Shakespeare’s vocabulary, the number of yet to be observed species of butterflies, the proportion of cancerous lymph nodes, or the mean differences of thousands of genes between two groups . These examples all share a defining feature: they encompass relatively large data sets with multiple parallel estimation problems posed at once. For instance, estimating the proportion of cancerous nodes for each individual in a sample of size <span class="math inline">\(n\)</span> amounts to <span class="math inline">\(n\)</span> parallel estimation problems.</p>
+<p>Parallel estimation problems also occur whenever a researcher conducts a meta-analysis (although meta-analyses are usually not framed in that way). In a meta-analysis, individual estimates of an effect of interest obtained over the course of multiple studies are combined in order to achieve an overall ‘better’ estimate of said effect. In addition, the combined information in the collection of individual study estimates can also be used to obtain ‘better’ estimates for each of the effects underlying the individual studies, which describes a parallel estimation problem. Moreover, empirical Bayes meta-analyses derived from the <span class="math inline">\(f\)</span>-modeling strategy have been around for decades <span class="citation" data-cites="raudenbush1985">(<a href="#ref-raudenbush1985" role="doc-biblioref">Raudenbush and Bryk 1985</a>)</span>. It thus seems natural to extend the list of potential areas of applications of <span class="math inline">\(g\)</span>-modeling and assess its usefulness in the context of meta-analyses.</p>
+<p>The sections below are structured as follows: <a href="#sec-theory" class="quarto-xref">Section&nbsp;2.1</a> and <a href="#sec-meta_analysis" class="quarto-xref">Section&nbsp;2.2</a> provide condensed accounts of the technical details underlying <span class="math inline">\(g\)</span>-modeling and classical meta-analytic methods employing maximum-likelihood (ML) and restricted-maximum-likelihood (REML) estimation, resepectively. In <a href="#sec-gmodel_meta_analysis" class="quarto-xref">Section&nbsp;2.4</a> an approach to meta-analysis based on <span class="math inline">\(g\)</span>-modeling is developed. In <a href="#sec-simulation" class="quarto-xref">Section&nbsp;3</a> the <span class="math inline">\(g\)</span>-modeling meta-analysis is compared to ML- and REML-based meta-analysis in a simulation study.</p>
+</section>
+<section id="sec-framework" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Statistical Framework</h1>
+<section id="sec-theory" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sec-theory"><span class="header-section-number">2.1</span> <em>G</em>-Modeling theory</h2>
+<p>This section briefly summarizes a number of results required to be able to apply <span class="math inline">\(g\)</span>-modeling to meta-analysis below. More comprehensive accounts can be found in Efron <span class="citation" data-cites="efron2016a">Efron (<a href="#ref-efron2016a" role="doc-biblioref">2016</a>)</span>, <span class="citation" data-cites="efron2014">Efron (<a href="#ref-efron2014" role="doc-biblioref">2014</a>)</span>, Efron and Hastie <span class="citation" data-cites="efron2016c">(<a href="#ref-efron2016c" role="doc-biblioref">2016</a>, Ch. 21)</span>, and <span class="citation" data-cites="narasimhan2020">Narasimhan and Efron (<a href="#ref-narasimhan2020" role="doc-biblioref">2020</a>)</span>.</p>
+<p>Suppose we have <span class="math inline">\(n\)</span> independent observations <span class="math inline">\(y_1,\ldots,y_n\)</span> generated by the Bayes model (<a href="#eq-bayes_model" class="quarto-xref">1</a>). Marginally, this implies</p>
+<p><span id="eq-marginal"><span class="math display">\[
+y_i \sim f_i(y_i) = \int_{\Theta} p_i(y_i|\theta) g(\theta)d\theta, \quad i = 1,\ldots,n.
+\tag{3}\]</span></span></p>
+<p>The researcher observes <span class="math inline">\(\boldsymbol{y} = (y_1,\ldots,y_n)\)</span> from the joint marginal density <span class="math inline">\(\boldsymbol{f} = \prod_{i=1}^n f_i\)</span>. The task is to estimate the prior density <span class="math inline">\(g\)</span> from the sample <span class="math inline">\(\boldsymbol{y}\)</span>, which may be described as <em>deconvolving</em> <span class="math inline">\(\boldsymbol{f}\)</span>, hence, the estimate <span class="math inline">\(\hat g\)</span> of <span class="math inline">\(g\)</span> is also referred to as a <em>deconvolution estimate</em> <span class="citation" data-cites="efron2016a">(e.g., <a href="#ref-efron2016a" role="doc-biblioref">Efron 2016</a>)</span>.</p>
+<p>For convenience, we may assume that <span class="math inline">\(g\)</span> sits on a finite subset of <span class="math inline">\(\mathbb{R}\)</span>; that is, the parameter space is given by <span class="math inline">\(\Theta = \{t_1,\ldots, t_m\}\)</span>, <span class="math inline">\(t_j \in \mathbb{R}, j = 1,\ldots,m\)</span> <span class="citation" data-cites="efron2014">(see <a href="#ref-efron2014" role="doc-biblioref">Efron 2014</a> for a description of the continuous case)</span>. Moreover, <span class="math inline">\(g\)</span> is restricted to the exponential family of distributions :</p>
+<p><span id="eq-prior_expo"><span class="math display">\[
+g(\theta|\boldsymbol{\alpha}) = \exp\bigg\{\boldsymbol{S}(\theta)^\top \boldsymbol{\alpha} - \phi(\boldsymbol{\alpha})\bigg\},
+\tag{4}\]</span></span></p>
+<p>where <span class="math inline">\(\mathbf{S}: \Theta \to \mathbb{R}^{p}\)</span> denotes the sufficient statistic, <span class="math inline">\(\boldsymbol{\alpha}\in \mathbb{R}^p\)</span> the natural parameter and <span class="math inline">\(\phi(\boldsymbol{\alpha}) = \log\big(\sum_{j=1}^m \exp\{\boldsymbol{S}(t_j)^\top \boldsymbol{\alpha}\}\big)\)</span> a constant, ensuring that <span class="math inline">\(g(\theta|\boldsymbol{\alpha})\)</span> sums to 1.<br>
+With <span class="math inline">\(\Theta\)</span> being a finite set, we can evaluate <span class="math inline">\(\boldsymbol{S}\)</span> at every point <span class="math inline">\(t_j \in \Theta\)</span> and assemble the resulting <span class="math inline">\(m\)</span> vectors, each containing <span class="math inline">\(p\)</span> elements, in what is called a <em>structure matrix</em> <span class="math inline">\(\boldsymbol{Q}\in \mathbb{R}^{m\times p}\)</span>,</p>
+<p><span class="math display">\[
+\boldsymbol{Q} =
+\begin{bmatrix}
+\boldsymbol{S}(t_1)^\top \\ \vdots\\ \boldsymbol{S}(t_m)^\top
+\end{bmatrix} =
+\begin{bmatrix}
+  S(t_1)_1&amp;\ldots&amp; S(t_1)_p \\
+  \vdots &amp; \ddots &amp;\vdots\\
+  S(t_m)_1&amp;\ldots&amp; S(t_m)_p \\
+\end{bmatrix}.
+\]</span></p>
+<p>The structure matrix will prove helpful in the derivation of the log-likelihood, the observed Fisher information, the bias and the variance, below. It is convenient to express the prior distribution in (<a href="#eq-prior_expo" class="quarto-xref">4</a>) for <span class="math inline">\(\theta\)</span> evaluated at some point <span class="math inline">\(t_j\)</span> in terms of the structure matrix <span class="math inline">\(\boldsymbol{Q}\)</span></p>
+<p><span id="eq-expo"><span class="math display">\[
+\begin{split}
+g_j(\boldsymbol{\alpha}) = g(t_j|\boldsymbol{\alpha}) = \exp\bigg\{\boldsymbol{Q}_j^\top\boldsymbol{\alpha} - \phi(\boldsymbol{\alpha})\bigg\}, \quad j = 1,\ldots,m\\
+\phi(\boldsymbol{\alpha}) = \log\bigg(\sum_{j = 1}^m e^{ \boldsymbol{Q}_j^\top(\boldsymbol{\alpha})}\bigg),
+\end{split}
+\tag{5}\]</span></span></p>
+<p>where <span class="math inline">\(\boldsymbol{Q}_j^\top\)</span> denotes the <span class="math inline">\(j\)</span>th row of <span class="math inline">\(\boldsymbol{Q}\)</span>.</p>
+<p>In theory, one is free to choose the function <span class="math inline">\(\boldsymbol{S}\)</span> and hence the structure matrix <span class="math inline">\(\boldsymbol{Q}\)</span> as one sees fit. A common choice for <span class="math inline">\(\boldsymbol{S}\)</span> <span class="citation" data-cites="efron2014">(e.g., <a href="#ref-efron2014" role="doc-biblioref">Efron 2014</a>)</span> is</p>
+<p><span class="math display">\[
+\boldsymbol{S}(t_j) = (1, \psi_1(t_j), \ldots, \ldots\psi_{p-1}(t_j))^\top,
+\]</span></p>
+<p>where <span class="math inline">\(\psi_k, k =1,\ldots p-1\)</span> denote basis functions for a natural cubic spline, with <span class="math inline">\(p-1\)</span> degrees of freedom returned by the R function <code>splines::ns(x = Θ, df = p-1)</code>. In this example, <code>splines::ns</code> is supplied with a vector containing the parameter space <span class="math inline">\(\Theta\)</span> as its first argument and determines a sequence of <span class="math inline">\(p\in \mathbb{N}\)</span> knots (supplied via the argument <code>df</code>), <span class="math inline">\(t_1 = \tau_1 &lt; \tau_2 &lt; \ldots &lt; \tau_p = t_m\)</span>, from the elements in <span class="math inline">\(\Theta\)</span>. The interior knots (<span class="math inline">\(\tau_2,\ldots,\tau_{p-1}\)</span>) are chosen at uniform quantiles of <span class="math inline">\(\Theta\)</span>. R maps each point <span class="math inline">\(t_j\in \Theta\)</span> to a <span class="math inline">\(p-1\)</span> row vector of natural cubic spline basis functions <span class="math inline">\(\psi_1(t_j), \ldots,\psi_{p-1}(t_j)\)</span> and collects these row vectors in a matrix, <span class="math inline">\(\boldsymbol{A}\in \mathbb{R}^{m\times (p-1)}\)</span>. Adding a column of <span class="math inline">\(1\)</span>’s to <span class="math inline">\(\boldsymbol{A}\)</span> yields the structure matrix <span class="math inline">\(\boldsymbol{Q}\)</span>. Consequently, the scalar <span class="math inline">\(\boldsymbol{Q}^\top_j \boldsymbol{\alpha}\)</span> in the exponent of (<a href="#eq-expo" class="quarto-xref">5</a>) is the value of a natural cubic spline that approximates the unnormalized log-density of the prior, at the point <span class="math inline">\(t_j\)</span>. These approximations are obtained for every <span class="math inline">\(t_j\in \Theta\)</span>. The pairs <span class="math inline">\((t_1, \boldsymbol{Q}_1^\top \boldsymbol{\alpha}), \ldots, (t_m, \boldsymbol{Q}_m^\top \boldsymbol{\alpha})\)</span> represent an approximation of the unnormalized log-prior density. The unknown <span class="math inline">\(\boldsymbol{\alpha}\in \mathbb{R}^p\)</span> is estimated from the data.</p>
+<p>The assumption of a discrete and finite sample space <span class="math inline">\(\Theta\)</span> allows for the representation of the prior density <span class="math inline">\(g\)</span> as a vector <span class="math inline">\(\boldsymbol{g} = (g_1(\boldsymbol{\alpha}),\ldots, g_m(\boldsymbol{\alpha}))^\top\)</span>. The marginal density <span class="math inline">\(f_i\)</span> for the <span class="math inline">\(i\)</span>th observation is thus (by analogy to (<a href="#eq-marginal" class="quarto-xref">3</a>))</p>
+<p><span id="eq-marginal_discrete"><span class="math display">\[
+y_i \sim f_i = f_i(y_i) = \sum_{j=1}^m p_i(y_i|\theta_i = t_j) g_j(\boldsymbol{\alpha}).
+\tag{6}\]</span></span></p>
+<p>To further simplify the notation, define</p>
+<p><span id="eq-short_notation"><span class="math display">\[
+p_{ij} := p_i(y_i|\theta_i = t_j)
+\tag{7}\]</span></span></p>
+<p>and let <span class="math inline">\(\boldsymbol{P} = (p_{ij})_{1\leq i \leq n, 1\leq j \leq m}\)</span> be a <span class="math inline">\(n\times m\)</span> matrix, where the <span class="math inline">\(i\)</span>th row is given by <span class="math inline">\((p_{i1},\ldots,p_{im})\)</span>. The vector of marginal densities <span class="math inline">\(\boldsymbol{f} = (f_1,\ldots,f_n)^\top\)</span> can thus be represented concisely using matrix multiplication</p>
+<p><span id="eq-matrix_prod"><span class="math display">\[
+\boldsymbol{f} = \boldsymbol{Pg}.
+\tag{8}\]</span></span></p>
+<p>Since the <span class="math inline">\(n\)</span> observations are assumed to be independent, the (joint) log-likelihood is</p>
+<p><span class="math display">\[
+l(\boldsymbol{\alpha}) = \sum_{i = 1}^n \log f_i = \sum_{i=1}^n \log \boldsymbol{P}_i^t \boldsymbol{g(\alpha)}
+\]</span></p>
+<p>where <span class="math inline">\(\boldsymbol{P}_i^t\)</span> denotes the <span class="math inline">\(i\)</span>th row of <span class="math inline">\(\boldsymbol{P}\)</span>.</p>
+<p>Let <span class="math inline">\(\boldsymbol{W}_i(\boldsymbol{\alpha}) = \big(g_1(p_{i1}/f_i - 1),\ldots, g_m (p_{im}/f_i - 1) \big)^\top\)</span>. The score function and observed Fisher information matrix are given by</p>
+<p><span id="eq-score"><span class="math display">\[
+\dot{l}(\boldsymbol{\alpha}) = \boldsymbol{Q}^\top \sum_{i=1}^n \boldsymbol{W}_i(\boldsymbol{\alpha})=: \boldsymbol{Q}^\top\boldsymbol{W}_+(\boldsymbol{\alpha})
+\tag{9}\]</span></span></p>
+<p>and</p>
+<p><span id="eq-information"><span class="math display">\[
+\begin{split}
+  I(\boldsymbol{\alpha}) &amp;= - \frac{\partial \dot{l}(\boldsymbol{\alpha})}{\partial \boldsymbol{\alpha}^\top}\\
+  &amp;= \boldsymbol{Q}^\top \bigg(\sum_{i=1}^n \boldsymbol{W}_i(\boldsymbol{\alpha})\boldsymbol{W}_i(\boldsymbol{\hat\alpha})^\top + \boldsymbol{W}_+(\boldsymbol{\alpha})\boldsymbol{g(\alpha)}^\top +  \boldsymbol{g(\alpha)}\boldsymbol{W}_+(\boldsymbol{\alpha})^\top \\
+  &amp;\quad - \text{diag}\{\boldsymbol{W}_+(\boldsymbol{\alpha})\}\bigg)\boldsymbol{Q},
+\end{split}
+\tag{10}\]</span></span></p>
+<p>respectively (see <span class="citation" data-cites="efron2016a">Efron (<a href="#ref-efron2016a" role="doc-biblioref">2016</a>)</span> for a proof).</p>
+<p>In estimating <span class="math inline">\(\boldsymbol{\alpha}\)</span>, regularization is needed <span class="citation" data-cites="efron2016a">(<a href="#ref-efron2016a" role="doc-biblioref">Efron 2016</a>)</span>. To this end, the <em>penalized log-likelihood</em> with penalty term <span class="math inline">\(s(\boldsymbol{\alpha})\)</span></p>
+<p><span class="math display">\[
+l_{\text{pen.}}(\boldsymbol{\alpha}) = l(\boldsymbol{\alpha}) - s(\boldsymbol{\alpha})
+\]</span></p>
+<p>is maximized rather than the log-likelihood function, <span class="math inline">\(l(\boldsymbol{\alpha})\)</span>. <span class="citation" data-cites="efron2016a">Efron (<a href="#ref-efron2016a" role="doc-biblioref">2016</a>)</span> and <span class="citation" data-cites="efron2016c">Efron and Hastie (<a href="#ref-efron2016c" role="doc-biblioref">2016</a>)</span> use the following penalty:</p>
+<p><span id="eq-penalty"><span class="math display">\[
+s(\boldsymbol{\alpha}) = c_0||\boldsymbol{\alpha}|| = c_0\bigg(\sum_{l=1}^p \alpha_l^2\bigg)^{1/2}, \quad c_0 &gt; 0,
+\tag{11}\]</span></span></p>
+<p>where <span class="math inline">\(c_0\)</span> is a user-defined penalty factor.</p>
+<p>The penalty introduces bias (but decreases variance) by drawing <span class="math inline">\(\boldsymbol{\hat\alpha}\)</span> towards the origin and thus <span class="math inline">\(\boldsymbol{\hat g} = \boldsymbol{g}(\boldsymbol{\hat \alpha})\)</span> towards a flat prior as <span class="math inline">\(c_0\)</span> increases.</p>
+<p>The gradient of <span class="math inline">\(s(\boldsymbol{\alpha})\)</span> is given by</p>
+<p><span id="eq-sdot"><span class="math display">\[
+\dot{s}(\boldsymbol{\alpha}) = \frac{\partial s(\boldsymbol{\alpha})}{\partial \boldsymbol{\alpha}} = c_0\frac{1}{2}\frac{1}{||\boldsymbol{\alpha}||} 2 \boldsymbol{\alpha} = \frac{c_0}{||\boldsymbol{\alpha}||}\boldsymbol{\alpha}.
+\tag{12}\]</span></span></p>
+<p>The Hessian matrix is</p>
+<p><span id="eq-sddot"><span class="math display">\[
+\ddot{s}(\boldsymbol{\alpha}) = \bigg(\frac{\partial^2 s}{\partial \alpha_l\partial \alpha_j}\bigg) = \frac{c_0}{||\boldsymbol{\alpha}||}\bigg(\boldsymbol{I}-\frac{\boldsymbol{\alpha}\boldsymbol{\alpha}^t}{||\boldsymbol{\alpha}||^2}\bigg).
+\tag{13}\]</span></span></p>
+<p>The penalized log-likelihood <span class="math inline">\(l_{\text{pen.}}\)</span> and its gradient <span class="math inline">\(\dot l_{\text{pen.}}(\boldsymbol{\alpha}) = \dot{l}(\boldsymbol{\alpha}) - \dot{s}(\boldsymbol{\alpha})\)</span> are needed to find the maximizer <span class="math inline">\(\boldsymbol{\hat \alpha}\)</span> of <span class="math inline">\(l_{\text{pen.}}\)</span> numerically in the implementation of <span class="math inline">\(g\)</span>-modeling in the simulation study below <a href="#sec-simulation" class="quarto-xref">Section&nbsp;3</a>.</p>
+<p>The bias vector of the maximizer <span class="math inline">\(\boldsymbol{\hat\alpha}\)</span> of <span class="math inline">\(l_\text{pen.}\)</span> can be estimated using <span class="citation" data-cites="efron2016a">(<a href="#ref-efron2016a" role="doc-biblioref">Efron 2016</a>)</span></p>
+<p><span id="eq-bias_alpha"><span class="math display">\[
+\text{Bias}(\boldsymbol{\hat\alpha}) = - \{I(\boldsymbol{\alpha})+\ddot{s}(\boldsymbol{\hat\alpha})\}^{-1}\dot{s}(\boldsymbol{\hat\alpha}).
+\tag{14}\]</span></span></p>
+<p>Plugging <span class="math inline">\(\boldsymbol{\hat\alpha}\)</span> into (<a href="#eq-expo" class="quarto-xref">5</a>) yields the estimate <span class="math inline">\(\boldsymbol{\hat g} = (g_1(\boldsymbol{\hat\alpha}), \ldots, g_m(\boldsymbol{\hat\alpha})) = (\hat g_1,\ldots,\hat g_m)\)</span> for the prior <span class="math inline">\(\boldsymbol{g}\)</span>. An estimate of the bias of <span class="math inline">\(\boldsymbol{\hat g}\)</span> is given by <span class="citation" data-cites="efron2016a efron2016c">(see <a href="#ref-efron2016a" role="doc-biblioref">Efron 2016</a>; <a href="#ref-efron2016c" role="doc-biblioref">Efron and Hastie 2016, 443</a>)</span></p>
+<p><span id="eq-bias_g"><span class="math display">\[
+  \begin{split}
+    \text{Bias}(\boldsymbol{\hat g}) &amp;= \boldsymbol{D}(\boldsymbol{\hat\alpha}) \boldsymbol{Q}\text{Bias}(\boldsymbol{\hat \alpha}), \\
+                                     &amp;\text{where } \boldsymbol{D}(\boldsymbol{\hat\alpha}) = \text{diag}\{\boldsymbol{g(\hat\alpha)}\} - \boldsymbol{g}(\boldsymbol{\hat \alpha}) \boldsymbol{g}(\boldsymbol{\hat\alpha}) ^\top.
+  \end{split}
+\tag{15}\]</span></span></p>
+<p>Equations (<a href="#eq-bias_alpha" class="quarto-xref">14</a>) and (<a href="#eq-bias_g" class="quarto-xref">15</a>) provide the reason for presenting the observed Fisher information matrix (<a href="#eq-information" class="quarto-xref">10</a>), the gradient and the Hessian of the penalty term <span class="math inline">\(s(\boldsymbol{\alpha})\)</span> in this section: these quantities can be used to estimate, and thus mitigate, the bias incurred by penalizing the log-likelihood.</p>
+</section>
+<section id="sec-meta_analysis" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="sec-meta_analysis"><span class="header-section-number">2.2</span> Meta-Analysis</h2>
+<p>A meta-analysis comprises a number <span class="math inline">\(k \in \mathbb{N}\)</span> of different studies, each on approximately the same substantive research question of interest. For instance, there may be <span class="math inline">\(k\)</span> studies on the efficacy of a new drug. Let <span class="math inline">\(\theta_i\)</span> denote the true mean difference in the outcome variable (e.g., blood pressure) between a control and a placebo group in study <span class="math inline">\(i = 1,\ldots,k\)</span>. Each study <span class="math inline">\(i\)</span> gives rise to an estimate <span class="math inline">\(\hat \theta_i\)</span> of <span class="math inline">\(\theta_i\)</span>, which is assumed normal with mean <span class="math inline">\(\theta_i\)</span> and known variance <span class="math inline">\(\sigma^2_i\)</span>. If - as is usually the case - the true <span class="math inline">\(\sigma^2_i\)</span>’s are not known, the sample estimates, <span class="math inline">\(\hat\sigma^2_i\)</span>’s, are used instead. This setting describes the so-called <em>normal random-effects model</em> of meta-analysis <span class="citation" data-cites="higgins2009">(e.g., <a href="#ref-higgins2009" role="doc-biblioref">Higgins, Thompson, and Spiegelhalter 2009</a>)</span>, often expressed in the following hierarchical form:</p>
+<p><span id="eq-normal_model"><span class="math display">\[
+\begin{split}
+  \text{I.}\quad&amp;\hat\theta_i|\theta_i \overset{\text{ind}}{\sim} \text{Normal}(\theta_i, \sigma^2_i)\\
+  \text{II.}\quad&amp;\theta_i|\mu,\tau^2 \overset{\text{i.i.d.}}{\sim} \text{Normal}(\mu, \tau^2), \quad i = 1,\ldots,k.
+\end{split}
+\tag{16}\]</span></span></p>
+<p>Clearly, (<a href="#eq-normal_model" class="quarto-xref">16</a>) is a <em>Bayes model</em> (<a href="#eq-bayes_model" class="quarto-xref">1</a>) specifying a normal prior on the true study effects.</p>
+<p>In many applications, the primary goal of a meta-analysis is to estimate <span class="math inline">\(\mu\)</span>, the so-called <em>average (treatment) effect</em>, with <span class="math inline">\(\tau^2\)</span> and the <span class="math inline">\(\theta_i\)</span>’s being treated as nuisance parameters. The variability in the true study effects <span class="math inline">\(\theta_i\)</span> implied by the variance parameter <span class="math inline">\(\tau^2\)</span> in stage I. of (<a href="#eq-normal_model" class="quarto-xref">16</a>) is also referred to as <em>effect-size heterogeneity</em> or simply <em>heterogeneity</em>.</p>
+<p>To derive estimators for <span class="math inline">\(\mu,\tau^2\)</span>, and <span class="math inline">\(\theta_1,\ldots,\theta_k\)</span> from the collection of <span class="math inline">\(k\)</span> studies, note that the normal random effects model (<a href="#eq-normal_model" class="quarto-xref">16</a>) is just a special case of a linear-mixed model:</p>
+<p><span id="eq-lmm"><span class="math display">\[
+\boldsymbol{y} = \boldsymbol{X} \boldsymbol{\beta} + \boldsymbol{Z} \boldsymbol{\eta} + \boldsymbol{\varepsilon},
+\tag{17}\]</span></span></p>
+<p>where <span class="math inline">\(\boldsymbol{y}\)</span> is a <span class="math inline">\(k\)</span>-vector of random response variables, <span class="math inline">\(\boldsymbol{X}\)</span> a <span class="math inline">\(k\times p\)</span> matrix of known regressors, <span class="math inline">\(\boldsymbol{\beta}\)</span> a <span class="math inline">\(p\)</span>-vector of fixed effects, <span class="math inline">\(\boldsymbol{Z}\)</span> a <span class="math inline">\(k\times q\)</span> design matrix for the random effects contained in the <span class="math inline">\(q\)</span>-vector <span class="math inline">\(\boldsymbol{\eta}\)</span> and <span class="math inline">\(\boldsymbol{\varepsilon}\)</span> a <span class="math inline">\(k\)</span>-vector of random error terms. Furthermore, it is assumed that <span class="math inline">\(\mathbb{E}[\boldsymbol{\eta}] = \mathbf{0}_k\)</span>, <span class="math inline">\(\mathbb{E}[\boldsymbol{\varepsilon}] = \mathbf{0}_q\)</span>, and that the variance-covariance matrix is given by<br>
+<span class="math display">\[
+\mathbb{C}\text{ov}[( \boldsymbol{\eta},\boldsymbol{\varepsilon})^\top] = \begin{bmatrix}
+  \boldsymbol{G} &amp; \mathbf{0}_{q\times n} \\
+  \mathbf{0}_{n\times q} &amp; \boldsymbol{R}
+\end{bmatrix},
+\]</span> where <span class="math inline">\(\boldsymbol{G} = \mathbb{C}\text{ov}[\boldsymbol{\eta}]\)</span> and <span class="math inline">\(\boldsymbol{R} = \mathbb{C}\text{ov}[\boldsymbol{\varepsilon}]\)</span> denote the variance-covariance matrices of <span class="math inline">\(\boldsymbol{\eta}\)</span> and <span class="math inline">\(\boldsymbol{\varepsilon}\)</span>, respectively. It then follows that <span class="math inline">\(\mathbb{E}[\boldsymbol{y}] = \boldsymbol{X}\boldsymbol{\beta}\)</span> and that <span class="math inline">\(\mathbb{C}\text{ov}[\boldsymbol{y}] = \boldsymbol{Z}\boldsymbol{G}\boldsymbol{Z}^\top + \boldsymbol{R}\)</span>. Assuming normality for <span class="math inline">\(\boldsymbol{\eta}\)</span> and <span class="math inline">\(\boldsymbol{\varepsilon}\)</span>, we have <span class="math display">\[
+\boldsymbol{y} \sim \text{Normal}_k(\mathbf{X}\boldsymbol{\beta}, \boldsymbol{ZGZ}^\top + \boldsymbol{R}).
+\]</span> Building on these assumption, the linear-mixed model representation of the normal random-effects meta-analytic model (<a href="#eq-normal_model" class="quarto-xref">16</a>) is obtained by setting</p>
+<p><span class="math display">\[\begin{align*}
+&amp;\boldsymbol{y} = \boldsymbol{\hat\theta} = (\hat\theta_1,\ldots,\hat\theta_k),\enspace  
+&amp; \mathbf{X} = \mathbf{1}_k = (1,\ldots,1)^\top \in \mathbb{R}^k, \quad
+&amp;\boldsymbol{\beta} = \mu\in \mathbb{R}, \\
+&amp;\mathbf{Z} = \mathbf{I}_k, \quad
+&amp; \boldsymbol{\eta} = (\theta_1 - \mu, \ldots, \theta_k - \mu)^\top, \quad
+&amp;\mathbf{G} = \text{diag}\{\tau^2,\ldots,\tau^2\}, \\
+&amp; \boldsymbol{R} = \text{diag}\{\sigma_1^2,\ldots,\sigma_k^2\},
+\end{align*}\]</span></p>
+<p>which yields</p>
+<p><span id="eq-lmmi"><span class="math display">\[
+\boldsymbol{\hat\theta} = \mathbf{1}_k \mu + \mathbf{I}_k \boldsymbol{\eta} + \boldsymbol{\varepsilon}.
+\tag{18}\]</span></span></p>
+<p>As an immediate consequence, the marginal distributions of the <span class="math inline">\(\hat\theta_i\)</span>’s are normal: <span class="math display">\[
+\hat \theta_i \overset{\text{ind.}}{\sim} \text{Normal}(\mu, \sigma^2_i + \tau^2), \quad i =1,\ldots,k.
+\]</span></p>
+<p>The joint log-likelihood of <span class="math inline">\(\hat\theta_1,\ldots,\hat \theta_n\)</span> is</p>
+<p><span id="eq-loglik"><span class="math display">\[
+  l(\mu,\tau^2) \propto -\frac{1}{2} \sum_{i=1}^k \log(\sigma^2_i + \tau^2) - \frac{1}{2} \sum_{i=1}^k \frac{(\hat \theta_i - \mu)^2}{\sigma_i^2 + \tau^2}.
+\tag{19}\]</span></span></p>
+<p>Maximization of (<a href="#eq-loglik" class="quarto-xref">19</a>) with respect to the parameter vector <span class="math inline">\((\mu, \tau^2)\)</span> can be achieved by profiling. For <span class="math inline">\(\tau^2\)</span> fixed, the maximizer of <span class="math inline">\(\mu\)</span> is obtained by setting the derivative of (<a href="#eq-loglik" class="quarto-xref">19</a>) with respect to <span class="math inline">\(\mu\)</span> equal to zero and solving for <span class="math inline">\(\mu\)</span>. This gives the estimator</p>
+<p><span id="eq-muhat"><span class="math display">\[
+\begin{split}
+    \hat \mu = \hat \mu(\tau^2) &amp;= \frac{\sum_{i=1}^k w_i\hat \theta_i}{\sum_{j = 1}^k w_i}, \\
+    &amp;\text{for } w_i = (\sigma^2_i+\tau^2)^{-1}.
+  \end{split}
+\tag{20}\]</span></span></p>
+<p>Replacing <span class="math inline">\(\mu\)</span> in (<a href="#eq-loglik" class="quarto-xref">19</a>) by the function <span class="math inline">\(\hat\mu(\tau^2)\)</span> (<a href="#eq-muhat" class="quarto-xref">20</a>) (<span class="math inline">\(\tau^2\)</span> is no longer assumed fixed) yields the profile log-likelihood for <span class="math inline">\(\tau^2\)</span>, denoted by <span class="math inline">\(l_p\)</span>.</p>
+<p>The maximum likelihood estimate <span class="math inline">\(\hat \tau^2_{\text{ML}}\)</span> for <span class="math inline">\(\tau^2\)</span> satisfies</p>
+<p><span id="eq-profile"><span class="math display">\[
+  \begin{split}
+  l_p'(\tau^2_{\text{ML}}) = \frac{\partial l_p(\tau^2)}{\partial \tau^2}\bigg\rvert_{\tau^2 = \hat \tau^2_{\text{ML}}} = -\frac{1}{2}\sum_{i=1}^k w_i + \frac{1}{2} \sum_{i=1}^k \frac{2(\hat\theta_i-\hat\mu(\tau^2))\hat \mu'(\tau^2)w_i^{-1}-(\hat\theta_i-\hat \mu)^2}{w_i^{-2}} \overset{!}{=} 0, \\
+  \text{where } \hat\mu'(\tau^2) = -\frac{\sum_{i=1}^k w_i\hat\theta_i}{\sum_{i=1}^k w_i} + \frac{\sum_{i=1}^k w_i^2\cdot\sum_{i=1}^k w_i\hat\theta_i}{\big(\sum_{i=1}^k w_i\big)^2}
+  \end{split}
+\tag{21}\]</span></span></p>
+<p>The solution <span class="math inline">\(\hat\tau^2_{\text{ML}}\)</span> to (<a href="#eq-profile" class="quarto-xref">21</a>) is found numerically. The maximum likelihood estimate <span class="math inline">\(\hat\mu_{\text{ML}}\)</span> for <span class="math inline">\(\mu\)</span> is then given by plugging <span class="math inline">\(\hat\tau^2_{\text{ML}}\)</span> into (<a href="#eq-muhat" class="quarto-xref">20</a>), <span class="math display">\[
+\hat\mu_{\text{ML}} = \hat\mu_{\text{ML}}(\hat\tau^2_{\text{ML}}).
+\]</span></p>
+<p>It may happen that solutions of <span class="math inline">\(\tau^2_{\text{ML}}\)</span> in <a href="#eq-profile" class="quarto-xref">21</a> converge to values outside the parameter space for <span class="math inline">\(\tau^2\)</span>, namely <span class="math inline">\(\tau^2 &lt; 0\)</span> (i.e., we would estimate the variance to be negative; see <a href="#fig-boundary" class="quarto-xref">Figure&nbsp;1</a> for an illustration).</p>
+</section>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div id="cell-fig-boundary" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Makie</span>, <span class="bu">CairoMakie</span>, <span class="bu">LaTeXStrings</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Distributions </span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Random</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"../src/gmodeling.jl"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"../src/meta_analysis.jl"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">Random</span>.<span class="fu">seed!</span>(<span class="fl">114</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>boundary_data <span class="op">=</span> GModeling.<span class="fu">sim_data</span>(<span class="fl">5</span>, <span class="fu">Normal</span>(<span class="fl">0</span>,<span class="fl">0.2</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>tau2 <span class="op">=</span> <span class="fu">LinRange</span>(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">200</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>pll <span class="op">=</span> [</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    try </span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span>MetaAnalysis.<span class="fu">pll!</span>([<span class="fl">0</span>], <span class="cn">nothing</span>, tau2[t], boundary_data.y, boundary_data.v) </span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    catch <span class="cn">e</span> </span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        if <span class="fu">isa</span>(<span class="cn">e</span>, <span class="dt">DomainError</span>) </span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="cn">missing</span> </span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span> </span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span> for t <span class="kw">in</span> <span class="fu">eachindex</span>(tau2)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>ind <span class="op">=</span> .!<span class="fu">ismissing</span>.(pll)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">set_theme!</span>(<span class="fu">theme_light</span>(), fontsize <span class="op">=</span> <span class="fl">14</span>) </span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>fig_boundary <span class="op">=</span> <span class="fu">Figure</span>(; backgroundcolor <span class="op">=</span> <span class="op">:</span>transparent, </span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                        resolution <span class="op">=</span> (<span class="fl">600</span>, <span class="fl">300</span>))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> <span class="fu">Axis</span>(fig_boundary[<span class="fl">1</span>,<span class="fl">1</span>], </span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>          xlabel <span class="op">=</span> L<span class="st">"</span><span class="sc">\t</span><span class="st">au^2"</span>, </span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>          ylabel <span class="op">=</span> <span class="st">"Profile Log-Likelihood"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="fu">hideydecorations!</span>(ax, label <span class="op">=</span> <span class="cn">false</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">vlines!</span>(ax, [<span class="fl">0</span>], linestyle <span class="op">=</span> <span class="op">:</span>dash, color <span class="op">=</span> <span class="op">:</span>grey)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="fu">lines!</span>(ax, <span class="fu">vcat</span>(tau2[ind]<span class="op">...</span>), <span class="fu">vcat</span>(pll[ind]<span class="op">...</span>), linewidth <span class="op">=</span> <span class="fl">2</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>fig_boundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>WARNING: replacing module GModeling.
+WARNING: replacing module MetaAnalysis.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div id="fig-boundary" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p class=""><img src="index_files/figure-html/fig-boundary-output-2.svg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure&nbsp;1: Example of a zero-variance estimate. The profile log-likelihood for the variance parameter <span class="math inline">\(\tau^2\)</span> decreases smoothly and attains its maximum outside of the parameter space at the nonsensical value of approximately <span class="math inline">\(-0.02\)</span>. In such cases, the maximum-likelihood estimate is usually set to <span class="math inline">\(\hat\tau_{\text{ML}}^2 = 0\)</span>.</figcaption>
+</figure>
+</div>
+</div>
+</div></div>
+<div id="fd9a41fa" class="cell markdown">
+<p>It is common practice to set the maximum likelihood estimate of <span class="math inline">\(\tau^2\)</span> equal to <span class="math inline">\(0\)</span> when the maximizer of the profile log-likelihood is located outside of the parameter space. Thus, a truncated version the maximum likelihood estimate for <span class="math inline">\(\tau^2\)</span> given by</p>
+<p><span id="eq-mle_def"><span class="math display">\[
+  \hat \tau^2_{\text{ML}} = \max\{\hat\tau^2_{\text{ML}}, 0\}.
+\tag{22}\]</span></span></p>
+<p>is actually used. These so-called <em>zero-variance estimates</em> (i.e., <span class="math inline">\(\hat\tau^2_{\text{ML}} = 0\)</span>) occur rather frequently in practice.</p>
+<p>It is well known that <span class="math inline">\(\hat\tau^2_{\text{ML}}\)</span> has negative bias for <span class="math inline">\(\tau^2\)</span> in finite samples, due to the loss in the degrees of freedom incurred by replacing <span class="math inline">\(\mu\)</span> in the profile likelihood (<a href="#eq-profile" class="quarto-xref">21</a>) with its estimate <span class="math inline">\(\hat\mu\)</span> <span class="citation" data-cites="viechtbauer2005 harville1977">(<a href="#ref-viechtbauer2005" role="doc-biblioref">Viechtbauer 2005</a>; <a href="#ref-harville1977" role="doc-biblioref">Harville 1977</a>)</span>. To correct for this bias, the restricted log-likelihood function <span class="math inline">\(l_R(\mu,\tau^2)\)</span> may be maximized instead of the log-likelihood (<a href="#eq-loglik" class="quarto-xref">19</a>). This is equivalent to maximizing the following function:</p>
+<p><span class="math display">\[
+h(\mu,\tau^2) = l(\mu, \tau^2) - \frac{1}{2} \log\sum_{i=1}^k (\sigma^2_i + \tau^2)^{-1}.
+\]</span></p>
+<p>The profile version of <span class="math inline">\(h(\mu, \tau^2)\)</span> is</p>
+<p><span class="math display">\[
+h_p(\tau^2) = l_p(\tau^2) - \frac{1}{2} \log\sum_{i=1}^k (\sigma^2_i + \tau^2)^{-1},
+\]</span></p>
+<p>satisfying</p>
+<p><span id="eq-reml"><span class="math display">\[
+h_p'(\hat\tau^2_{\text{REML}}) = l_p'(\tau^2_{\text{REML}})  - \frac{1}{2}\frac{\partial }{\partial \tau^2}\log\sum_{i=1}^k (\sigma_i^2 + \tau^2)^{-1} = 0,
+\tag{23}\]</span></span></p>
+<p>where <span class="math inline">\(\tau^2_{\text{REML}}\)</span> denotes the <em>restricted-maximum-likelihood</em> (REML) estimate for <span class="math inline">\(\tau^2\)</span>.</p>
+<p>Again, the solution <span class="math inline">\(\hat\tau^2_{\text{REML}}\)</span> to (<a href="#eq-reml" class="quarto-xref">23</a>) is found numerically with the constraint that <span class="math inline">\(\hat\tau^2_{\text{REML}}\)</span> is truncated to <span class="math inline">\(0\)</span> if the solutions converge to values of <span class="math inline">\(\tau^2 &lt; 0\)</span>. The resulting REML estimator for <span class="math inline">\(\mu\)</span> is given by</p>
+<p><span id="eq-muhat_reml"><span class="math display">\[
+  \hat\mu_{\text{REML}} := \hat\mu(\hat\tau^2_{\text{REML}}).
+\tag{24}\]</span></span></p>
+<p>For <span class="math inline">\(\tau^2\)</span> known, the variance of <span class="math inline">\(\hat\mu(\tau^2)\)</span> in (<a href="#eq-muhat" class="quarto-xref">20</a>) is given by</p>
+<p><span id="eq-muhat_var"><span class="math display">\[
+  \mathbb{V}\text{ar}[\hat\mu(\tau^2)] = \frac{1}{\sum_{i=1}^n (\sigma^2_i + \tau^2)^{-1}}.
+\tag{25}\]</span></span></p>
+<p>Commonly employed estimators of the variances of <span class="math inline">\(\hat\mu_{\text{ML}}\)</span> and <span class="math inline">\(\hat\mu_{\text{REML}}\)</span> are given by</p>
+<p><span id="eq-var_est"><span class="math display">\[
+  \mathbb{\hat V}\text{ar}[\hat\mu_{\text{ML}}] = \mathbb{V}\text{ar}[\hat\mu(\tau^2_{\text{ML}})]
+\quad \text{ and }  \quad
+  \mathbb{\hat V}\text{ar}[\hat\mu_{\text{ML}}] = \mathbb{V}\text{ar}[\hat\mu(\tau^2_{\text{REML}})].
+\tag{26}\]</span></span></p>
+<p>The estimator <span class="math inline">\(\hat \mu\)</span> in (<a href="#eq-muhat" class="quarto-xref">20</a>) and its variance <span class="math inline">\(\mathbb{V}\text{ar}[\hat\mu]\)</span> are used to construct <span class="math inline">\((1-\alpha)\%\)</span> Wald-type confidence intervals (CI) for <span class="math inline">\(\mu\)</span> based on a normal approximation of the distribution of <span class="math inline">\(\hat \mu\)</span>. The general form of a Wald-type CI (for <span class="math inline">\(\tau^2\)</span> fixed) is given by</p>
+<p><span id="eq-ci"><span class="math display">\[
+\hat \mu(\tau^2) \pm z_{1-\alpha/2}\sqrt{\mathbb{V}\text{ar}[\hat \mu(\tau^2)]},
+\tag{27}\]</span></span></p>
+<p>where <span class="math inline">\(z_{1-\alpha/2}\)</span> denotes the <span class="math inline">\((1-\alpha)\)</span>-quantile of the standard normal distribution. In applications, confidence intervals are obtained by plugging <span class="math inline">\(\tau^2_{\text{ML}}\)</span> or <span class="math inline">\(\tau^2_{\text{REML}}\)</span> into (<a href="#eq-ci" class="quarto-xref">27</a>), depending on the method used for estimating <span class="math inline">\(\tau^2\)</span>.</p>
+<section id="sec-fmodel_posterior" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-fmodel_posterior"><span class="header-section-number">2.3</span> <span class="math inline">\(F\)</span>-Modeling posterior inference</h2>
+<p>If <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\tau^2\)</span> are known, stage II. of the Bayes model (<a href="#eq-normal_model" class="quarto-xref">16</a>) could be interpreted as a normal single-prior distribution for each of the <span class="math inline">\(\theta_i\)</span>. The sampling distribution of the <span class="math inline">\(\hat\theta_i\)</span> is also normal. Thus, by conjugacy, the posterior distribution for <span class="math inline">\(\theta_i\)</span> is</p>
+<p><span id="eq-posterior"><span class="math display">\[
+  \begin{split}
+    \theta_i|\hat\theta_i, \mu, \tau^2 &amp;\sim \text{Normal}(\tilde\theta_i, V), \\
+    \text{for } V = \bigg\{\frac{1}{\sigma^2_i}+\frac{1}{\tau^2}\bigg\}^{-1} &amp;\text{ and } \tilde\theta_i = V \bigg\{\frac{\hat\theta_i}{\sigma_i^2} + \frac{\mu}{\tau^2}\bigg\}.
+  \end{split}
+\tag{28}\]</span></span></p>
+<p>The posterior in (<a href="#eq-posterior" class="quarto-xref">28</a>) serves as the starting point for any inferences about the individual <span class="math inline">\(\theta_i\)</span>’s, e.g., by way of <span class="math inline">\((1-\alpha)\%\)</span> (<span class="math inline">\(\alpha\in (0,1)\)</span>) credible intervals constructed from posterior quantiles. Thus meta-analysis naturally gives rise to <span class="math inline">\(k\)</span> parallel estimation problems (one for each <span class="math inline">\(\theta_i, i = 1,\ldots,k\)</span>).</p>
+<p>In the <span class="math inline">\(f\)</span>-modeling strategy to empirical Bayes, posterior distributions for the <span class="math inline">\(\theta_i\)</span>’s are obtained by replacing <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\tau^2\)</span> in (<a href="#eq-posterior" class="quarto-xref">28</a>) by estimates <span class="math inline">\(\hat\mu\)</span> and <span class="math inline">\(\hat\tau^2\)</span>. Both the ML- and REML-estimates are suitable choices.</p>
+</section>
+<section id="sec-gmodel_meta_analysis" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="sec-gmodel_meta_analysis"><span class="header-section-number">2.4</span> <span class="math inline">\(G\)</span>-Modeling meta-analysis</h2>
+<p>The <span class="math inline">\(g\)</span>-modeling equivalent of the Bayes model (<a href="#eq-normal_model" class="quarto-xref">16</a>) is given by<br>
+<span id="eq-g_meta"><span class="math display">\[
+\begin{split}
+  \text{I.}\quad&amp;\hat\theta_i|\theta_i \overset{\text{ind}}{\sim} \text{Normal}(\theta_i, \sigma^2_i)\\
+  \text{II.}\quad&amp;\theta_i|\boldsymbol{\alpha} \overset{\text{i.i.d.}}{\sim} \boldsymbol{g}(\boldsymbol{\alpha}), \quad i = 1,\ldots,k,
+\end{split}
+\tag{29}\]</span></span></p>
+<p>for <span class="math inline">\(\boldsymbol{g}(\boldsymbol{\alpha}) = (g_1(\boldsymbol{\alpha}),\ldots, g_m(\boldsymbol{\alpha}))\)</span> and <span class="math inline">\((\boldsymbol{\alpha})\)</span> an exponential family density as in (<a href="#eq-expo" class="quarto-xref">5</a>).</p>
+<p>The conditional density <span class="math inline">\(p_{ij}\)</span> in (<a href="#eq-short_notation" class="quarto-xref">7</a>) which the observations in stage I. of (<a href="#eq-g_meta" class="quarto-xref">29</a>) are drawn from now denotes the density of a normal distribution, <span class="math inline">\(\text{Normal}(\theta_i, \sigma^2_i)\)</span>.</p>
+<p>An estimate <span class="math inline">\(\boldsymbol{\hat g}\)</span> of <span class="math inline">\(\boldsymbol{g}\)</span> is obtained as described in <a href="#sec-theory" class="quarto-xref">Section&nbsp;2.1</a>. Note that <span class="math inline">\(\boldsymbol{\hat g}\)</span> is a (counting) density by construction. The prior expectation and variance of <span class="math inline">\(\theta_1\)</span> (assuming that they exist) under <span class="math inline">\(\boldsymbol{\hat g}\)</span> are thus given by</p>
+<p><span id="eq-g_estimators"><span class="math display">\[
+\mu_{\hat g} = \mathbb{E}[\theta_1] = \sum_{j=1}^m t_j \hat g_j  \quad \text{and}\quad \tau_{\hat g}^2 = \mathbb{V}\text{ar}[\theta_1] = \sum_{j = 1}^m (t_j-\mu_{\hat g})^2 \hat g_j,
+\tag{30}\]</span></span></p>
+<p>and may be regarded as estimators for <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\tau^2\)</span>, the average (treatment) effect and its variance (note that since the <span class="math inline">\(\theta_i\)</span> are i.i.d. the expectation and variance of every <span class="math inline">\(\theta_i\)</span> are equal to those of <span class="math inline">\(\theta_1\)</span>).</p>
+<p>Obvious defects of <span class="math inline">\(\mu_{\hat g}\)</span> and <span class="math inline">\(\tau_{\hat g}^2\)</span> as estimators for <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\tau^2\)</span> are the apparent lack of analytic expressions for their variances. Theoretically, the bootstrap could be employed as a method for estimating the variances of <span class="math inline">\(\mu_{\hat g}\)</span> and <span class="math inline">\(\tau_{\hat g}^2\)</span> as well as for constructing confidence intervals. However, evaluating statistical properties such as bias, MSE and coverage probabilities of these boot-strapped estimates turned out to be computationally infeasible (at least to the author of this report) due to the large number of required simulations.</p>
+<p>We can nevertheless mimic the construction of a Wald-type CI by plugging <span class="math inline">\(\tau^2_{\hat g}\)</span> into the general form given by (<a href="#eq-ci" class="quarto-xref">27</a>). The coverage probability of the resulting interval estimator can then be assessed in simulations, as is done below.</p>
+</section>
+<section id="sec-gmodel_posterior" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="sec-gmodel_posterior"><span class="header-section-number">2.5</span> <span class="math inline">\(G\)</span>-Modeling posterior inference</h2>
+<p>The posterior probabilities for each event <span class="math inline">\(\{\theta_i = t_j: i = 1,\ldots,k, j = 1,\ldots,m\}\)</span> based on the corresponding observation <span class="math inline">\(\hat \theta_i\)</span> are obtained via Bayes’ rule,</p>
+<p><span id="eq-g_posterior"><span class="math display">\[
+  \hat g_{ij} = \mathbb{P}\{\theta_i = t_j|\hat\theta_i\} =
+  \frac{p_{ij}\hat g_j}{\sum_{j = 1}^k p_{ij}\hat g_j},\quad j = 1,\ldots,m.
+\tag{31}\]</span></span></p>
+<p>The entire posterior density for an individual <span class="math inline">\(\theta_i\)</span> can thus be represented as a vector</p>
+<p><span id="eq-posterior_vec"><span class="math display">\[
+\boldsymbol{\hat g}_i = (\hat g_{i1},\ldots, \hat g_{im})^\top.
+\tag{32}\]</span></span></p>
+<p>Once the posterior <span class="math inline">\(\boldsymbol{\hat g}_i\)</span> is obtained, it is straightforward to generate random samples from it and compute posterior quantiles, thus allowing for the construction of credible intervals for each <span class="math inline">\(\theta_i\)</span>.</p>
+</section>
+<section id="sec-simulation" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Simulation study</h1>
+<section id="sec-goals" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-goals"><span class="header-section-number">3.1</span> Study goals</h2>
+<p>The goal of the simulation study is to apply the <span class="math inline">\(g\)</span>-modeling meta-analysis developed in <a href="#sec-gmodel_meta_analysis" class="quarto-xref">Section&nbsp;2.4</a> and compare its performance to the classical approaches based on ML- and REML-estimation across several scenarios.</p>
+<p>The study follows <span class="citation" data-cites="chung2013">Chung, Rabe-Hesketh, and Choi (<a href="#ref-chung2013" role="doc-biblioref">2013</a>)</span> in several regards. The three meta-analytic estimation strategies are compared with respect to the following properties: The <em>proportion of zero-variance estimates (i.e., <span class="math inline">\(\hat \tau^2 = 0\)</span>)</em>, the <em>MSE (or RMSE)</em> and the <em>bias</em> of <span class="math inline">\(\hat\tau^2_{\text{ML}}, \hat \tau^2_{\text{REML}}\)</span> and <span class="math inline">\(\tau^2_{\hat g}\)</span>, as well as the coverage probabilities of the 95% Wald-type CI’s for <span class="math inline">\(\mu\)</span> obtained by plugging these different estimators for <span class="math inline">\(\tau^2\)</span> into (<a href="#eq-ci" class="quarto-xref">27</a>). No explicit rationale for using MSE (or RMSE), bias and coverage probabilities seems necessary as these are universally accepted as sensible quantities for evaluating estimators.</p>
+<p>However, the proportion of zero-variance estimates as a reasonable property with respect to which estimators for <span class="math inline">\(\tau^2\)</span> can be compared seems to require some further justification. <a href="#sec-meta_analysis" class="quarto-xref">Section&nbsp;2.2</a> briefly touched on the issue of zero-variance estimates which frequently occur in both ML- and REML-applications. An estimate of <span class="math inline">\(\hat\tau^2_{\text{ML}} = 0\)</span> appears to be in conflict with the intuitive interpretation of stage II. in (<a href="#eq-normal_model" class="quarto-xref">16</a>): by assuming model (<a href="#eq-normal_model" class="quarto-xref">16</a>), a researcher expects variability in the true study effects <span class="math inline">\(\theta_1,\ldots,\theta_k\)</span>. Claiming <span class="math inline">\(\hat\tau^2 = 0\)</span> is equivalent to claiming that there is no variability in the study effects and that one and the same true effect generated the observable <span class="math inline">\(\hat\theta_i\)</span> in the <span class="math inline">\(k\)</span> studies, each usually conducted at a different time, in a different place, by a different group of researchers, etc. Against this backdrop of variable situational factors, the stance that it is reasonable to model the observations from different studies as having been generated by one and the same true effect appears objectionable on scientific grounds (For completeness, the objectionable assumption is called the fixed- or common-effect assumption in the literature and it would provide for an alternative model to (<a href="#eq-normal_model" class="quarto-xref">16</a>)). Therefore, it may be considered desirable that estimators for <span class="math inline">\(\tau^2\)</span> avoid zero-variance estimates for <span class="math inline">\(\tau^2\)</span>. The estimator <span class="math inline">\(\tau^2_{\hat g}\)</span> achieves this by construction (precluding the case <span class="math inline">\(\hat g_j = 0\)</span> for every <span class="math inline">\(j = 1,\ldots,m\)</span>).</p>
+<section id="sec-set_up" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="sec-set_up"><span class="header-section-number">3.1.1</span> Study Design</h3>
+<p>The study design draws on <span class="citation" data-cites="chung2013">Chung, Rabe-Hesketh, and Choi (<a href="#ref-chung2013" role="doc-biblioref">2013</a>)</span> <span class="citation" data-cites="brockwell2001">Brockwell and Gordon (<a href="#ref-brockwell2001" role="doc-biblioref">2001</a>)</span>. For each number of studies <span class="math inline">\(k\in \{10, 30, 100\}\)</span> in a meta-analysis, <span class="math inline">\(k\)</span> true study-level effects <span class="math inline">\(\theta_1,\ldots,\theta_k\)</span> were drawn from a <span class="math inline">\(\text{Normal}(\mu = 0.5, \tau^2)\)</span> distribution, <span class="math inline">\(\tau^2 \in \{0.01, 0.05, 0.1\}\)</span>. For each <span class="math inline">\(\theta_i\)</span> an observation <span class="math inline">\(\hat\theta_i\)</span> was drawn from a normal distribution with mean <span class="math inline">\(\theta_i\)</span> and variance <span class="math inline">\(\sigma^2_i\)</span> drawn from a <span class="math inline">\(0.25\cdot\chi^2(1)\)</span> distribution truncated at <span class="math inline">\(0.009\)</span> below and <span class="math inline">\(0.6\)</span> above. The truncated <span class="math inline">\(\chi^2\)</span>-distribution for the <span class="math inline">\(\sigma_i^2\)</span> was first used by <span class="citation" data-cites="brockwell2001">Brockwell and Gordon (<a href="#ref-brockwell2001" role="doc-biblioref">2001</a>)</span> due to its<br>
+apparent ‘consistency’ with the distribution of sample variances of empirical <em>log-odds ratios</em>. One can thus think of the simulated <span class="math inline">\(\theta_i\)</span>’s as true log-odds ratios and the <span class="math inline">\(\hat\theta_i\)</span>’s as sample estimates with variances equal to the simulated <span class="math inline">\(\sigma_i^2\)</span>. Log-odds ratios (or odds ratios) are ubiquitous in medical research.</p>
+<p>For each combination of <span class="math inline">\(k\)</span> and <span class="math inline">\(\tau^2\)</span>, 1,000 replications of the simulation were carried out. The normal random effects model (<a href="#eq-normal_model" class="quarto-xref">16</a>) was fit to each replication using both ML- and REML-estimation as described in <a href="#sec-meta_analysis" class="quarto-xref">Section&nbsp;2.2</a>. The <span class="math inline">\(g\)</span>-modeling equivalent given by <a href="#eq-g_meta" class="quarto-xref">29</a> was fit as described in <a href="#sec-gmodel_meta_analysis" class="quarto-xref">Section&nbsp;2.4</a> with the following specifications: <span class="math inline">\(\Theta\)</span> was given by discretizing the interval between <span class="math inline">\(-1\)</span> and <span class="math inline">\(1.5\)</span> into 100 equally spaced points; i.e., <span class="math inline">\(\Theta = \{-1,-0.974,\ldots, 1.5 \}\)</span>.</p>
+<p>The structure matrix <span class="math inline">\(\boldsymbol{Q}\)</span> was obtained as described in <a href="#sec-theory" class="quarto-xref">Section&nbsp;2.1</a>. In particular, a matrix of natural cubic spline bases with 5 degrees of freedom for the points in <span class="math inline">\(\Theta\)</span> was augmented by a column of <span class="math inline">\(1\)</span>’s, resulting in a <span class="math inline">\(100\times 6\)</span> structure matrix <span class="math inline">\(\boldsymbol{Q}\)</span>. This is the default approach used in the R package <span class="citation" data-cites="narasimhan2020">Narasimhan and Efron (<a href="#ref-narasimhan2020" role="doc-biblioref">2020</a>)</span>, which was specifically developed for the <span class="math inline">\(g\)</span>-modeling approach outlined in <a href="#sec-theory" class="quarto-xref">Section&nbsp;2.1</a>.</p>
+<p>Values of <span class="math inline">\(0.05, 0.2\)</span>, and <span class="math inline">\(0.6\)</span> for the penalty factor <span class="math inline">\(c_0\)</span> under conditions of <span class="math inline">\(\tau^2 = 0.01, 0.05\)</span> and <span class="math inline">\(0.1\)</span>, respectively, were found to return generally favorable results in terms of the bias-variance trade-off for estimating <span class="math inline">\(\boldsymbol{g}\)</span>. The rationale underlying different choices of <span class="math inline">\(c_0\)</span> for each <span class="math inline">\(\tau^2\)</span> may be stated as follows: The bias and variance of <span class="math inline">\(\boldsymbol{\hat g}\)</span> as an estimator can be gauged by increasing or decreasing the factor <span class="math inline">\(c_0\)</span>. An increase in <span class="math inline">\(c_0\)</span> ‘flattens’ the prior towards a uniform distribution, thus making the bias more pronounced. At the same time, the variance of <span class="math inline">\(\boldsymbol{\hat g}\)</span> viewed as an <em>estimator</em> for <span class="math inline">\(\boldsymbol{g}\)</span> is reduced. Flattening the prior however also <em>increases</em> the variance <span class="math inline">\(\tau^2_{\hat g}\)</span> of a particular realization of <span class="math inline">\(\boldsymbol{\hat g}\)</span>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The dependence of <span class="math inline">\(\tau_{\hat g}^2\)</span> on <span class="math inline">\(c_0\)</span> also affects the width (and hence the coverage probability) of the Wald-type CIs for <span class="math inline">\(\mu\)</span>, which increases as <span class="math inline">\(\tau^2_{\hat g}\)</span> increases.</p>
+<p>Choosing the ‘right’ value for <span class="math inline">\(c_0\)</span> thus requires considerable subject-matter insight into the problem at hand. For instance, if substantive background knowledge allows the researcher to expect a relatively large amount of variation in the true study effects, then the bias introduced by increasing <span class="math inline">\(c_0\)</span> may be negligible as in this case a “flatter” prior may still be a good approximation to the true prior. The goal of minimizing the variance of the estimator <span class="math inline">\(\boldsymbol{\hat g}\)</span> takes precedence over the goal of minimizing bias. On the other hand, if the between-study variation is expected to be small a priori, it may be wise to keep <span class="math inline">\(c_0\)</span> close to <span class="math inline">\(0\)</span>, as now the true prior distribution is expected to be more concetrated around a single value. Flattening <span class="math inline">\(\boldsymbol{\hat g}\)</span> (even by just a small amount) may cause it to deviate considerably from the true prior. The more concetrated the prior distribution, the smaller its variance <span class="math inline">\(\tau^2\)</span>. Hence, the variances <span class="math inline">\(\sigma_i^2+\tau^2\)</span> of the observations <span class="math inline">\(\hat\theta_i\)</span> also become smaller. This decrease at the level of the observations carries over to the estimator <span class="math inline">\(\boldsymbol{\hat g}\)</span> and the need to keep its variance in check becomes insignificant in comparison to the need of minimizing the bias of <span class="math inline">\(\boldsymbol{\hat g}\)</span>.</p>
+<p>All analyses were carried out in <em>Julia</em> <span class="citation" data-cites="Julia2017">(<a href="#ref-Julia2017" role="doc-biblioref">Bezanson et al. 2017</a>)</span>. In particular the Limited-memory Broyden-Fletcher-Goldfarb-Shanno (LBFGS) algorithm as implemented in the package was used to estimate <span class="math inline">\(\boldsymbol{\alpha}\in \mathbb{R}^6\)</span> in the <span class="math inline">\(g\)</span>-modeling and <span class="math inline">\(\tau^2\)</span> and ‘’classical’’ (maximum-likelihood and restricted maximum likelihood) approaches to meta-analysis, respectively.</p>
+</section>
+</section>
+<section id="sec-results" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-results"><span class="header-section-number">3.2</span> Results</h2>
+<p>All results concerning the <span class="math inline">\(g\)</span>-modeling approach are based on a bias-corrected version of the estimates of <span class="math inline">\(\boldsymbol{g}\)</span>. In particular if <span class="math inline">\(\boldsymbol{\hat g}\)</span> denotes the (uncorrected) estimate for <span class="math inline">\(\boldsymbol{g}\)</span> obtained by plugging <span class="math inline">\(\boldsymbol{\hat\alpha}\)</span> into <span class="math inline">\(\boldsymbol{g}(\boldsymbol{\alpha})\)</span>, the bias corrected estimate is given by <span class="math display">\[
+\boldsymbol{\hat g}_{\text{BC}} = \boldsymbol{\hat g} - \text{Bias}(\boldsymbol{\hat g})
+\]</span> where <span class="math inline">\(\text{Bias}(\boldsymbol{\hat g})\)</span> is given by (<a href="#eq-bias_g" class="quarto-xref">15</a>). Since <span class="math inline">\(\text{Bias}(\boldsymbol{\hat g})\)</span> is just an estimate of the true bias, some of the values (i.e., probabilities) in the density vector <span class="math inline">\(\boldsymbol{\hat g_{\text{BC}}}\)</span> might turn out to be negative. However, these negative values were observed only low-probability regions of <span class="math inline">\(\boldsymbol{\hat g}_{\text{BC}}\)</span> and appeared to be<br>
+miniscule in magnitude. In effect, these negative ‘probabilities’ were equal to zero thus suggesting the ad-hoc solution of replacing them by a small positive probability of <span class="math inline">\(10^{-32}\)</span>.</p>
+<p>The prior density estimates are displayed in <a href="#fig-figure1" class="quarto-xref">Figure&nbsp;2</a>. The solid blue curves connect the average densities over the 1,000 replications at each of the 100 values <span class="math inline">\(\Theta\)</span> sits on (<span class="math inline">\(\Theta = \{-1, -0.974, \ldots, 1.5\}\)</span>). The vertical error-bars correspond to <span class="math inline">\(\pm 1\)</span> standard error (computed as the standard deviation of the 1,000 <span class="math inline">\(\hat , j = 1,\ldots,m\)</span>) of these averages. For <span class="math inline">\(\tau^2 = 0.01\)</span>, the <span class="math inline">\(g\)</span>-modeling densities are clearly wider than the densities of the true distributions (dashed orange curves) from which the study-level <span class="math inline">\(\theta_i\)</span>’s were drawn. Consequently, <span class="math inline">\(\tau_{\hat g}\)</span> overestimated the true <span class="math inline">\(\tau^2\)</span> on average (even though <span class="math inline">\(c_0\)</span> was close to <span class="math inline">\(0\)</span> and thus the bias was relatively low). As <span class="math inline">\(k\)</span> increased, the shapes of the average <span class="math inline">\(g\)</span>-modeling estimates seemed to approach that of the true prior distribution, <span class="math inline">\(\text{Normal}(0.5, 0.01)\)</span>. Similar behavior can be observed for <span class="math inline">\(\tau^2 = 0.05\)</span> and <span class="math inline">\(\tau^2 = 0.1\)</span>, albeit the average <span class="math inline">\(g\)</span>-modeling estimates resembled the shapes of the corresponding true prior distribution much closer than did the estimates for <span class="math inline">\(\tau^2 = 0.01\)</span>, even for small <span class="math inline">\(k\)</span>. Moreover, the variance of the estimator <span class="math inline">\(\boldsymbol{\hat g}\)</span> decreased with increasing <span class="math inline">\(k\)</span> as is indicated by the standard errors.</p>
+<div id="fig-figure1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="./figs/figure1.svg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure&nbsp;2: <span class="math inline">\(G\)</span>-modeling estimates of prior distribution of study-level effects <span class="math inline">\(\theta\)</span>. The dashed orange curves indicate the true prior distribution from which study-level effects were drawn, the green curves connect the average densities of each of 100 equally spaced points over 1,000 simulation replicates. The upper and lower endpoints of the blue vertical bars correspond <span class="math inline">\(\pm\)</span> 1 standard error from the mean of the density estimates at each point. <span class="math inline">\(k\)</span> denotes the number of study-level effects that were drawn (i.e., the number of studies in a meta-analysis).</figcaption>
+</figure>
+</div>
+<p>The top row of <a href="#fig-figure2" class="quarto-xref">Figure&nbsp;3</a> illustrates the frequencies with which the different estimators <span class="math inline">\(\tau_{\hat g}^2\)</span> returned the substantively questionable estimate of a zero variance (i.e., <span class="math inline">\(\tau^2 = 0\)</span>). Unsurprisingly <span class="math inline">\(\tau_{\hat g}^2\)</span> never estimated <span class="math inline">\(\tau^2\)</span> to be zero. <a href="#fig-figure2" class="quarto-xref">Figure&nbsp;3</a> nevertheless demonstrates that zero-variance estimates occured quite often when using the ML- or REML-estimator, even when the number of studies in the meta-analysis was exceptionally large at <span class="math inline">\(k = 100\)</span>.</p>
+<p>The second and third row of <a href="#fig-figure2" class="quarto-xref">Figure&nbsp;3</a> show that <span class="math inline">\(\tau_{\hat g}^2\)</span> had the largest Bias of the three estimator across all combinations of <span class="math inline">\(k\)</span> and <span class="math inline">\(\tau^2\)</span> considered in the simulation study. However, <span class="math inline">\(\tau^2_{\hat g}\)</span> actually beat the REML- and the ML-estimators in terms of MSE for <span class="math inline">\(k=10\)</span> and <span class="math inline">\(\tau^2 = 0.1\)</span> (note that <a href="#fig-figure2" class="quarto-xref">Figure&nbsp;3</a> shows the <em>root mean squared error</em> which is just <span class="math inline">\(\sqrt{\text{MSE}}\)</span>).</p>
+<p>The fourth row of <a href="#fig-figure2" class="quarto-xref">Figure&nbsp;3</a> shows the observed coverage probabilities of 95% Wald-type CIs for <span class="math inline">\(\mu\)</span> constructed using equation (<a href="#eq-ci" class="quarto-xref">27</a>). For the ML- and REML-estimators, coverage probabilities were below the nominal 95% level in all situations, with the ML-estimator showing the largest deviation at <span class="math inline">\(k = 10\)</span> and <span class="math inline">\(\tau^2 = 0.10\)</span> (coverage below 90%). CIs based on <span class="math inline">\(\tau_{\hat g}^2\)</span> on the other hand were closest to the nominal level in most cases, thus performing consistently better than ML- and REML-based estimators.</p>
+<div id="fig-figure2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="./figs/figure2.svg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure&nbsp;3: Proportion of zero-variance estimates, root mean squared error (RMSE), and bias for <span class="math inline">\(\tau^2\)</span> and coverage probabilities of <span class="math inline">\(95\%\)</span> confidence intervals for <span class="math inline">\(\mu\)</span> over 1,000 replications.</figcaption>
+</figure>
+</div>
+<p><a href="#fig-figure3" class="quarto-xref">Figure&nbsp;4</a> summarizes the posterior distributions for the individual <span class="math inline">\(\theta_i\)</span>’s by averaged <span class="math inline">\(0.025, 0.5\)</span> and <span class="math inline">\(0.975\)</span> quantiles. The individual curves were created as follows: For a given combination of <span class="math inline">\(k\)</span> and <span class="math inline">\(\tau^2\)</span> let <span class="math inline">\(\hat\theta_{(s:i)}\)</span> denote the <span class="math inline">\(i\)</span>th <em>ordered</em> value of the simulated observations <span class="math inline">\(\hat\theta_{s:1},\ldots,\hat\theta_{s:k}\)</span> in simulation <span class="math inline">\(s \in \{1,\ldots,1000\}\)</span>. The <em>inverse-variance</em> weighted mean over all <span class="math inline">\(1,000\)</span> simulations of the <span class="math inline">\(i\)</span>th ordered observation is given by <span class="math display">\[
+\bar{\hat \theta}_{(i)} = \frac{\sum_{s = 1}^{1000}\hat\theta_{s:i}/\sigma^{2}_{(s:i)}}{\sum_{s = 1}^{1000}1/\sigma^{2}_{(s:i)}}
+\]</span> where <span class="math inline">\(\sigma_{(s:i)}^2\)</span> denotes the variance of the <span class="math inline">\(i\)</span>th ordered observation. Similarly, let <span class="math inline">\(\boldsymbol{\hat g}_{(s:i)}\)</span> denote the <span class="math inline">\(g\)</span>-modeling posterior density for the <span class="math inline">\(i\)</span>th ordered true effect <span class="math inline">\(\theta_{(s:i)}\)</span> in simulation <span class="math inline">\(s\)</span>. The <span class="math inline">\(0.025\)</span>-, <span class="math inline">\(0.5\)</span> and <span class="math inline">\(0.975\)</span>-quantiles of <span class="math inline">\(\boldsymbol{\hat g}_{(s:i)}\)</span> were approximated by the corresponding sample quantiles observed in 2,000 random draws from <span class="math inline">\(\boldsymbol{\hat g}_{(s:i)}\)</span>. The interval between the <span class="math inline">\(0.025\)</span>- and the <span class="math inline">\(0.975\)</span>-quantile thus gives an approximation to the 95% central credible interval for <span class="math inline">\(\theta_{(s:i)}\)</span>. These sample quantiles where averaged over the 1,000 simulations. Consequently, each weighted mean ordered observation <span class="math inline">\(\bar{\hat \theta}_{(i)}\)</span> was associated with a triple of averaged quantiles, <span class="math inline">\((q^{0.025}_{(i)}, q^{0.5}_{(i)}, q^{0.975}_{(i)})\)</span>. Analogous triples of averaged quantiles were calculated for the <span class="math inline">\(f\)</span>-modeling-based posterior distribution and the true posterior distribution. These were obtained by plugging the estimate <span class="math inline">\(\hat \tau^2_{\text{REML}}\)</span> and the true <span class="math inline">\(\tau^2\)</span> into (<a href="#eq-posterior" class="quarto-xref">28</a>), respectively.</p>
+<p>In <a href="#fig-figure3" class="quarto-xref">Figure&nbsp;4</a> these different triples of average posterior quantiles are plotted against the <span class="math inline">\(\bar{\hat\theta}_{(i)}\)</span>’s with the curves closest to the bottom of the graph connecting the <span class="math inline">\(0.025\)</span> quantiles, the middle curves connecting the <span class="math inline">\(0.5\)</span> quantiles<br>
+and the curves closest to the top connecting the <span class="math inline">\(0.975\)</span> quantiles.</p>
+<div id="fig-figure3" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="./figs/figure3.svg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure&nbsp;4: Comparison of average posterior quantiles over 1,000 simulation replicates for each combination of number of studies <span class="math inline">\(k\)</span> and distribution <span class="math inline">\(\text{Normal}(0.5,\tau^2)\)</span>. Curves closest to the bottom correspond to averages of 0.025 quantiles, curves closest to the top correspond to averages of 0.975 quantiles, curves in between correspond to averages of 0.5 quantiles.</figcaption>
+</figure>
+</div>
+<p>Visually, the <span class="math inline">\(g\)</span>-modeling posterior quantiles (solid blue curves in <a href="#fig-figure3" class="quarto-xref">Figure&nbsp;4</a>) seem to match the true posterior quantiles (dashed orange curves) quite well, even for small <span class="math inline">\(k\)</span>. The biggest disagreement between the <span class="math inline">\(f\)</span>-modeling (dashed blue curves) and <span class="math inline">\(g\)</span>-modeling quantiles was observed for the combination <span class="math inline">\(k = 10\)</span> and <span class="math inline">\(\tau^2 = 0.01\)</span>: Considering only the <span class="math inline">\(0.025\)</span> and <span class="math inline">\(0.975\)</span> quantiles, we see that <span class="math inline">\(f\)</span>-modeling consistently underestimated these quantiles, thus indicating that on average the <span class="math inline">\(f\)</span>-modeling <span class="math inline">\(95\%\)</span> credible intervals for the <span class="math inline">\(\theta_i\)</span>’s were narrower than the true <span class="math inline">\(95\%\)</span> credible intervals. For the <span class="math inline">\(g\)</span>-modeling quantiles, the opposite was the case: <span class="math inline">\(g\)</span>-modeling <span class="math inline">\(95\%\)</span> credible intervals tended to overestimate the true <span class="math inline">\(95\%\)</span> credible intervals.</p>
+</section>
+</section>
+<section id="further-remarks" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Further Remarks</h1>
+<p>The aim of this investigation was to develop an approach for conducting a meta-analysis based on the <span class="math inline">\(g\)</span>-modeling strategy to empirical Bayes and to compare its performance to the classical maximum- and restricted maximum-likelihood-based random-effects meta-analyses. The results of the simulation study suggest that <span class="math inline">\(g\)</span>-modeling offers a viable strategy for carrying out an entire meta-analysis.</p>
+<p>In particular, zero-variance estimates are avoided which not only results in more plausible inferences about the variation of true study effects but also improves upon the coverage probability of the Wald-type CIs constructed using (<a href="#eq-ci" class="quarto-xref">27</a>). In addition, posterior quantiles for the individual study effects based on <span class="math inline">\(g\)</span>-modeling closely matched those of the true posterior distributions. This suggests that <span class="math inline">\(g\)</span>-modeling gives a reasonable answer to the question of estimating multiple quantities in parallel.</p>
+<p>Two additional aspect of meta-analysis that have not been discussed so far pertain to the task of predicting the true effects of future studies, <span class="math inline">\(\theta_{\text{new}}\)</span> <span class="citation" data-cites="higgins2009">(e.g., <a href="#ref-higgins2009" role="doc-biblioref">Higgins, Thompson, and Spiegelhalter 2009</a>)</span> and assuming a non-normal or mixture distribution for the true study effects (i.e., the prior distribution). Concerning the former, numerous approaches to the construction of <span class="math inline">\((1-\alpha)\%\)</span> prediction intervals for <span class="math inline">\(\theta_{\text{new}}\)</span> exist. <span class="math inline">\(G\)</span>-modeling seems to offer a particularly simple method: by simulating draws from the estimated prior distribution <span class="math inline">\(\boldsymbol{\hat g}\)</span> we are essentially simulating future study effects <span class="math inline">\(\theta_{\text{new}}\)</span>. It is then straightforward to determine the <span class="math inline">\(\alpha/2\)</span> and the <span class="math inline">\((1-\alpha/2)\)</span> sample quantiles of these draws and consider the interval bounded by these quantiles as an estimate of a <span class="math inline">\((1-\alpha)\%\)</span> prediction interval for a future true study effect (which is not the same as a future estimate).</p>
+<p>As far as modelling the prior distribution as non-normal is concerned, <span class="math inline">\(g\)</span>-modeling seems to offer an advantage over conventional meta-analytic methods. The normal random effects model assumes a normal distribution for the prior distribution of true study effects. This assumption may be called into question. <span class="math inline">\(G\)</span>-modeling may be more flexible in this regard, allowing for non-normal (e.g., multimodal) prior distributions to be incorporated in the model.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+</section>
+</div>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-Julia2017" class="csl-entry" role="listitem">
+Bezanson, Jeff, Alan Edelman, Stefan Karpinski, and Viral B Shah. 2017. <span>“Julia: A Fresh Approach to Numerical Computing.”</span> <em>SIAM <span>R</span>eview</em> 59 (1): 65–98. <a href="https://doi.org/10.1137/141000671">https://doi.org/10.1137/141000671</a>.
+</div>
+<div id="ref-brockwell2001" class="csl-entry" role="listitem">
+Brockwell, Sarah E., and Ian R. Gordon. 2001. <span>“A Comparison of Statistical Methods for Meta-Analysis.”</span> <em>Statistics in Medicine</em> 20 (6): 825–40. <a href="https://doi.org/10.1002/sim.650">https://doi.org/10.1002/sim.650</a>.
+</div>
+<div id="ref-carroll1988" class="csl-entry" role="listitem">
+Carroll, Raymond J., and Peter Hall. 1988. <span>“Optimal <span>Rates</span> of <span>Convergence</span> for <span>Deconvolving</span> a <span>Density</span>.”</span> <em>Journal of the American Statistical Association</em> 83 (404): 1184–86. <a href="https://doi.org/10.1080/01621459.1988.10478718">https://doi.org/10.1080/01621459.1988.10478718</a>.
+</div>
+<div id="ref-chung2013" class="csl-entry" role="listitem">
+Chung, Yeojin, Sophia Rabe-Hesketh, and In-Hee Choi. 2013. <span>“Avoiding Zero Between-Study Variance Estimates in Random-Effects Meta-Analysis.”</span> <em>Statistics in Medicine</em> 32 (23): 4071–89. <a href="https://doi.org/10.1002/sim.5821">https://doi.org/10.1002/sim.5821</a>.
+</div>
+<div id="ref-efron2014" class="csl-entry" role="listitem">
+Efron, Bradley. 2014. <span>“Two <span>Modeling</span> <span>Strategies</span> for <span>Empirical</span> <span>Bayes</span> <span>Estimation</span>.”</span> <em>Statistical Science</em> 29 (2): 285–301. <a href="https://doi.org/10.1214/13-STS455">https://doi.org/10.1214/13-STS455</a>.
+</div>
+<div id="ref-efron2016a" class="csl-entry" role="listitem">
+———. 2016. <span>“Empirical <span>Bayes</span> Deconvolution Estimates.”</span> <em>Biometrika</em> 103 (1): 1–20. <a href="https://doi.org/10.1093/biomet/asv068">https://doi.org/10.1093/biomet/asv068</a>.
+</div>
+<div id="ref-efron2016c" class="csl-entry" role="listitem">
+Efron, Bradley, and Trevor Hastie. 2016. <em>Computer Age Statistical Inference: Algorithms, Evidence, and Data Science</em>. Institute of <span>Mathematical</span> <span>Statistics</span> Monographs. New York, NY: Cambridge University Press.
+</div>
+<div id="ref-harville1977" class="csl-entry" role="listitem">
+Harville, David A. 1977. <span>“Maximum <span>Likelihood</span> <span>Approaches</span> to <span>Variance</span> <span>Component</span> <span>Estimation</span> and to <span>Related</span> <span>Problems</span>.”</span> <em>Journal of the American Statistical Association</em> 72 (358): 320–38. <a href="https://doi.org/10.2307/2286796">https://doi.org/10.2307/2286796</a>.
+</div>
+<div id="ref-higgins2009" class="csl-entry" role="listitem">
+Higgins, Julian P. T., Simon G. Thompson, and David J. Spiegelhalter. 2009. <span>“A Re-Evaluation of Random-Effects Meta-Analysis.”</span> <em>Journal of the Royal Statistical Society: Series A (Statistics in Society)</em> 172 (1): 137–59. <a href="https://doi.org/10.1111/j.1467-985X.2008.00552.x">https://doi.org/10.1111/j.1467-985X.2008.00552.x</a>.
+</div>
+<div id="ref-lehmann1998" class="csl-entry" role="listitem">
+Lehmann, E. L., and George Casella. 1998. <em>Theory of Point Estimation</em>. 2nd ed. Springer Texts in Statistics. New York: Springer.
+</div>
+<div id="ref-narasimhan2020" class="csl-entry" role="listitem">
+Narasimhan, Balasubramanian, and Bradley Efron. 2020. <span>“<span class="nocase">deconvolveR</span>: <span>A</span> <span>G</span>-<span>Modeling</span> <span>Program</span> for <span>Deconvolution</span> and <span>Empirical</span> <span>Bayes</span> <span>Estimation</span>.”</span> <em>Journal of Statistical Software</em> 94 (September): 1–20. <a href="https://doi.org/10.18637/jss.v094.i11">https://doi.org/10.18637/jss.v094.i11</a>.
+</div>
+<div id="ref-raudenbush1985" class="csl-entry" role="listitem">
+Raudenbush, Stephen W., and Anthony S. Bryk. 1985. <span>“Empirical Bayes Meta-Analysis.”</span> <em>Journal of Educational Statistics</em> 10 (2): 75–98. <a href="http://www.jstor.org/stable/1164836">http://www.jstor.org/stable/1164836</a>.
+</div>
+<div id="ref-viechtbauer2005" class="csl-entry" role="listitem">
+Viechtbauer, Wolfgang. 2005. <span>“Bias and <span>Efficiency</span> of <span>Meta</span>-<span>Analytic</span> <span>Variance</span> <span>Estimators</span> in the <span>Random</span>-<span>Effects</span> <span>Model</span>.”</span> <em>Journal of Educational and Behavioral Statistics</em> 30 (3): 261–93. <a href="https://doi.org/10.3102/10769986030003261">https://doi.org/10.3102/10769986030003261</a>.
+</div>
+</div>
+<aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Notice the distinction between the two types of variances mentioned in the last two sentences: In the first sentence, variance refers to the variation of the estimator <span class="math inline">\(\boldsymbol{\hat g}\)</span> in hypothetical repetitions of the experiment, whereas in the second sentence the term variance refers to <span class="math inline">\(\tau_{\hat g}^2\)</span> - an estimate of <span class="math inline">\(\tau^2\)</span>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        for (let i = 0; i < 2; i++) {
+          container.appendChild(note.children[i].cloneNode(true));
+        }
+        return container.innerHTML
+      } else {
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      return note.innerHTML;
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>  </div> <!-- /content --> 
+  
+</body></html>
